@@ -1,0 +1,119 @@
+### 1. Тестирование регистрации и аутентификации
+
+### 1. Регистрация нового пользователя
+POST http://127.0.0.1:8000/api/register/
+Content-Type: application/json
+
+{
+  "username": "user6",
+  "email": "user6@mail.ru",
+  "password": "qawsedr6"
+}
+
+
+### 1.2 Получение токена (авторизация)
+POST http://127.0.0.1:8000/api/token/
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "qawsedr1"
+}
+
+### 2. Тестирование постов
+
+### 2.1 Просмотр постов без авторизации (должен работать)
+GET http://127.0.0.1:8000/api/posts/
+Content-Type: application/json
+
+### 2.2 Попытка создания поста без авторизации (должна быть ошибка 401)
+POST http://127.0.0.1:8000/api/posts/
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+Попытка без авторизации
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 2.3 Создание поста с авторизацией (должен работать)
+POST http://127.0.0.1:8000/api/posts/
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwMjU0Nzk3LCJpYXQiOjE3NTAyNTQ0OTcsImp0aSI6IjUwOWRhOTJiNDk0YjRlMDM4ZWI4ZDRmODU3MWRhOTM3IiwidXNlcl9pZCI6OH0.YRGb0Ae9QuReX-vGhgdXD96EmItRvJeSygNptC8BnS8
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+Мой первый пост
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 3. Тестирование комментариев
+
+### 3.1 Создание комментария без авторизации (должна быть ошибка 401)
+POST http://127.0.0.1:8000/api/posts/1/comments/
+Content-Type: application/json
+
+{
+  "text": "Попытка без авторизации"
+}
+
+### 3.2 Создание комментария с авторизацией (должен работать)
+POST http://127.0.0.1:8000/api/posts/1/comments/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwMjU0Nzk3LCJpYXQiOjE3NTAyNTQ0OTcsImp0aSI6IjUwOWRhOTJiNDk0YjRlMDM4ZWI4ZDRmODU3MWRhOTM3IiwidXNlcl9pZCI6OH0.YRGb0Ae9QuReX-vGhgdXD96EmItRvJeSygNptC8BnS8
+
+{
+  "text": "Отличный пост! Класс!!"
+}
+
+### 3.3 Просмотр комментариев без авторизации (должен работать)
+GET http://127.0.0.1:8000/api/posts/1/comments/
+Content-Type: application/json
+
+### 4. Тестирование лайков
+
+### 4.1 Поставить лайк без авторизации (должна быть ошибка 401)
+POST http://127.0.0.1:8000/api/posts/1/like/
+Content-Type: application/json
+
+### 4.2 Поставить лайк с авторизацией (должен работать)
+POST http://127.0.0.1:8000/api/posts/1/like/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+### 4.3 Убрать лайк (повторный запрос)
+POST http://127.0.0.1:8000/api/posts/1/like/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+### 5. Тестирование прав доступа
+
+### 5.1 Попытка удалить чужой пост (должна быть ошибка 403)
+DELETE http://127.0.0.1:8000/api/posts/1/
+Content-Type: application/json
+Authorization: Bearer {{another_user_token}}
+
+### 5.2 Удаление своего поста (должен работать)
+DELETE http://127.0.0.1:8000/api/posts/2/
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+### 6. Дополнительные тесты
+
+### 6.1 Просмотр конкретного поста
+GET http://127.0.0.1:8000/api/posts/1/
+Content-Type: application/json
+
+### 6.2 Фильтрация постов по автору
+GET http://127.0.0.1:8000/api/posts/?author=1
+Content-Type: application/json

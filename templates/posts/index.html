@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Социальная сеть</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'posts/styles.css' %}">
+    <style>
+        .hidden { display: none; }
+        #user-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        #logout-btn {
+            margin-left: 10px;
+            cursor: pointer;
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        #auth-forms {
+            margin-bottom: 20px;
+        }
+        #auth-buttons button {
+            margin-right: 10px;
+        }
+        form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        input, textarea, button {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 8px;
+        }
+        button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1>Социальная сеть</h1>
+
+        <!-- Блок информации о пользователе -->
+        <div id="user-info" class="hidden">
+            Вы вошли как: <span id="username-display"></span>
+            <button id="logout-btn">Выйти</button>
+        </div>
+
+        <!-- Формы авторизации -->
+        <div id="auth-forms">
+            <form id="login-form" class="hidden">
+                <h2>Вход</h2>
+                <input type="text" id="login-username" placeholder="Имя пользователя" required>
+                <input type="password" id="login-password" placeholder="Пароль" required>
+                <button type="submit">Войти</button>
+            </form>
+
+            <form id="register-form" class="hidden">
+                <h2>Регистрация</h2>
+                <input type="text" id="register-username" placeholder="Имя пользователя" required>
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Пароль" required>
+                <button type="submit">Зарегистрироваться</button>
+            </form>
+
+            <div id="auth-buttons">
+                <button id="show-login">Войти</button>
+                <button id="show-register">Зарегистрироваться</button>
+            </div>
+        </div>
+
+        <!-- Форма создания поста -->
+        <form id="new-post-form" class="hidden">
+            <h2>Новый пост</h2>
+            <textarea id="new-post-text" placeholder="Введите текст поста" required></textarea>
+            <input type="file" id="new-post-image" accept="image/*">
+            <button type="submit">Опубликовать</button>
+        </form>
+
+        <!-- Список постов -->
+        <div id="posts"></div>
+    </div>
+    <script src="{% static 'posts/app.js' %}"></script>
+</body>
+</html>
