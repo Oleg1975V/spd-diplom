@@ -1,11 +1,9 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Post, Comment, Like
-from django.shortcuts import render
+from .models import Post, Comment, Like, PostImage
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 from .serializers import PostSerializer, CommentSerializer, UserRegisterSerializer, LikeSerializer
-from django.shortcuts import get_object_or_404
-
 
 def index(request):
     return render(request, 'posts/index.html')
@@ -17,7 +15,10 @@ class PostListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        post = serializer.save(author=self.request.user)
+        images = self.request.FILES.getlist('image')  # поддержка нескольких файлов
+        for image in images:
+            PostImage.objects.create(post=post, image=image)
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -67,7 +68,7 @@ class LikeToggleView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         post_id = self.kwargs['post_id']
-        post = generics.get_object_or_404(Post, id=post_id)
+        post = get_object_or_404(Post, id=post_id)
         user = request.user
 
         like, created = Like.objects.get_or_create(post=post, user=user)

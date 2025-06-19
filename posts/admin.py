@@ -1,15 +1,18 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Post, Comment, Like
+from .models import Post, PostImage, Comment, Like
 
+class PostImageInline(admin.TabularInline):
+    model = PostImage
+    extra = 10
 
 class PostInline(admin.TabularInline):
     model = Post
     extra = 0
-    fields = ('text', 'image', 'created_at')
+    fields = ('text', 'created_at')
     readonly_fields = ('created_at',)
-
+    inlines = [PostImageInline]
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
@@ -19,9 +22,10 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ('text', 'author__username')
     autocomplete_fields = ['author']
     readonly_fields = ('created_at', 'likes_count')
+    inlines = [PostImageInline]
     fieldsets = (
         (None, {
-            'fields': ('author', 'text', 'image')
+            'fields': ('author', 'text')
         }),
         ('Дополнительно', {
             'fields': ('created_at', 'likes_count'),
@@ -59,7 +63,5 @@ class UserAdmin(BaseUserAdmin):
         return obj.posts.count()
     post_count.short_description = 'Количество постов'
 
-
-# Отменяем стандартную регистрацию и регистрируем наш кастомный UserAdmin
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)

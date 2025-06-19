@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const elements = {
         newPostForm: document.getElementById('new-post-form'),
         newPostText: document.getElementById('new-post-text'),
-        newPostImage: document.getElementById('new-post-image'),
+        newPostImages: document.getElementById('new-post-images'),
         postsContainer: document.getElementById('posts'),
         loginForm: document.getElementById('login-form'),
         registerForm: document.getElementById('register-form'),
@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkAuth = async () => {
         const token = localStorage.getItem('access_token');
         if (!token) return false;
-        
         try {
             const response = await fetch('http://127.0.0.1:8000/api/posts/', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -44,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('auth-forms').classList.toggle('hidden', isAuth);
         document.getElementById('new-post-form').classList.toggle('hidden', !isAuth);
         document.getElementById('user-info').classList.toggle('hidden', !isAuth);
-        
         if (isAuth) {
             await fetchPosts();
         }
@@ -55,11 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const token = localStorage.getItem('access_token');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            
             const response = await fetch('http://127.0.0.1:8000/api/posts/', { headers });
-            
             if (!response.ok) throw new Error('Failed to fetch posts');
-            
             const data = await response.json();
             renderPosts(data.results || data);
         } catch (error) {
@@ -71,12 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Отрисовка постов
     const renderPosts = (posts) => {
         if (!elements.postsContainer) return;
-        
         elements.postsContainer.innerHTML = posts.length ? posts.map(post => `
             <div class="post" data-id="${post.id}">
                 <h3>${post.author}</h3>
                 <p>${post.text}</p>
-                ${post.image ? `<img src="${post.image.startsWith('http') ? post.image : 'http://127.0.0.1:8000' + post.image}" alt="Post image">` : ''}
+                <div class="post-images">
+                    ${post.images.map(img => `<img src="${img}" alt="Post image">`).join('')}
+                </div>
                 <p class="date">${new Date(post.created_at).toLocaleString()}</p>
                 <button class="like-btn" data-id="${post.id}">
                     ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
@@ -96,12 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `).join('') : '<p>Пока нет постов</p>';
-
         // Обработчики событий
         document.querySelectorAll('.like-btn').forEach(btn => {
             btn.addEventListener('click', () => handleLikeToggle(btn.dataset.id));
         });
-
         document.querySelectorAll('.comment-form').forEach(form => {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -112,40 +106,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Создать пост (исправленная версия)
+    // Создать пост
     const handleNewPostSubmit = async (e) => {
         e.preventDefault();
-        
-        const imageFile = elements.newPostImage.files[0];
-        if (imageFile && imageFile.size > 5 * 1024 * 1024) {
-            showError('Размер изображения не должен превышать 5MB');
+        const imagesFiles = elements.newPostImages.files;
+        if (imagesFiles.length > 10) {
+            showError('Необходимо загрузить не более 10 изображений.');
             return;
         }
-
         const formData = new FormData();
         formData.append('text', elements.newPostText.value);
-        if (imageFile) formData.append('image', imageFile);
-
+        for (let i = 0; i < imagesFiles.length; i++) {
+            formData.append('images', imagesFiles[i]);
+        }
         try {
             const token = localStorage.getItem('access_token');
             if (!token) throw new Error('Необходимо авторизоваться');
-
             const response = await fetch('http://127.0.0.1:8000/api/posts/', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
-                    // Не устанавливаем Content-Type - браузер сам добавит multipart/form-data
                 },
                 body: formData
             });
-
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.detail || 'Ошибка создания поста');
             }
-
             elements.newPostText.value = '';
-            elements.newPostImage.value = '';
+            elements.newPostImages.value = '';
             await fetchPosts();
         } catch (error) {
             console.error('Ошибка создания поста:', error);
@@ -198,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             if (!response.ok) throw new Error('Неверные учетные данные');
-            
             const { access, refresh } = await response.json();
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
@@ -244,17 +232,14 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.loginForm.addEventListener('submit', handleLogin);
         elements.registerForm.addEventListener('submit', handleRegister);
         elements.logoutBtn.addEventListener('click', handleLogout);
-        
         document.getElementById('show-login').addEventListener('click', () => {
             document.getElementById('login-form').classList.remove('hidden');
             document.getElementById('register-form').classList.add('hidden');
         });
-        
         document.getElementById('show-register').addEventListener('click', () => {
             document.getElementById('register-form').classList.remove('hidden');
             document.getElementById('login-form').classList.add('hidden');
         });
-
         updateUI();
     };
 

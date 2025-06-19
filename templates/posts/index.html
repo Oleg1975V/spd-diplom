@@ -44,18 +44,26 @@
         button {
             cursor: pointer;
         }
+        .post-images {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .post-images img {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
     <div id="app" class="container">
         <h1>Социальная сеть</h1>
-
         <!-- Блок информации о пользователе -->
         <div id="user-info" class="hidden">
             Вы вошли как: <span id="username-display"></span>
             <button id="logout-btn">Выйти</button>
         </div>
-
         <!-- Формы авторизации -->
         <div id="auth-forms">
             <form id="login-form" class="hidden">
@@ -64,7 +72,6 @@
                 <input type="password" id="login-password" placeholder="Пароль" required>
                 <button type="submit">Войти</button>
             </form>
-
             <form id="register-form" class="hidden">
                 <h2>Регистрация</h2>
                 <input type="text" id="register-username" placeholder="Имя пользователя" required>
@@ -72,21 +79,18 @@
                 <input type="password" id="register-password" placeholder="Пароль" required>
                 <button type="submit">Зарегистрироваться</button>
             </form>
-
             <div id="auth-buttons">
                 <button id="show-login">Войти</button>
                 <button id="show-register">Зарегистрироваться</button>
             </div>
         </div>
-
         <!-- Форма создания поста -->
         <form id="new-post-form" class="hidden">
             <h2>Новый пост</h2>
             <textarea id="new-post-text" placeholder="Введите текст поста" required></textarea>
-            <input type="file" id="new-post-image" accept="image/*">
+            <input type="file" id="new-post-images" accept="image/*" multiple>
             <button type="submit">Опубликовать</button>
         </form>
-
         <!-- Список постов -->
         <div id="posts"></div>
     </div>

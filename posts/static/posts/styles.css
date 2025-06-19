@@ -68,12 +68,6 @@ button:hover {
     padding: 10px 0;
 }
 
-.post img {
-    max-width: 100%;
-    height: auto;
-    margin-top: 10px;
-}
-
 .comment {
     margin-left: 20px;
     padding: 10px 0;

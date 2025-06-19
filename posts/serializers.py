@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Post, Comment, Like
+from .models import Post, PostImage, Comment, Like
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -38,6 +38,18 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+class PostImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False)
+
+    class Meta:
+        model = PostImage
+        fields = ['id', 'image']
+
+    def validate_image(self, value):
+        if value.size > 5 * 1024 * 1024:  # 5MB
+            raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
+        return value
+
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
@@ -52,6 +64,7 @@ class CommentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Комментарий должен содержать не менее 2 символов.")
         return value
 
+
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
@@ -59,40 +72,36 @@ class LikeSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
 
-class LikeSerializer(serializers.Serializer):
-    """Пустой сериализатор, т.к. лайк не требует входных данных."""
-    pass
-
-
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
+    images = PostImageSerializer(many=True, read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
-    image = serializers.ImageField(required=False)
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'image', 'created_at', 'comments', 'likes_count']
+        fields = ['id', 'author', 'text', 'images', 'created_at', 'comments', 'likes_count']
         read_only_fields = ['id', 'created_at', 'likes_count']
 
     def get_likes_count(self, obj):
         return obj.likes.count()
 
-    def get_image(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request is not None:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
+    def get_images(self, obj):
+        request = self.context.get('request')
+        images = obj.images.all()
+        return [request.build_absolute_uri(image.image.url) if request else image.image.url for image in images]
 
     def validate_text(self, value):
         if len(value.strip()) < 5:
             raise serializers.ValidationError("Текст поста должен содержать не менее 5 символов.")
         return value
 
-    def validate_image(self, value):
-        if value.size > 5 * 1024 * 1024:  # 5MB
-            raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
-        return value
+    def create(self, validated_data):
+        post = Post.objects.create(**validated_data)
+        images_data = self.context.get('view').request.FILES.getlist('images')
+        if len(images_data) > 10:
+            raise serializers.ValidationError("Необходимо загрузить не более 10 изображений.")
+        for image_data in images_data:
+            PostImage.objects.create(post=post, image=image_data)
+        return post
