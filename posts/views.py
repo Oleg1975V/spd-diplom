@@ -14,14 +14,9 @@ class PostListCreateView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['request'] = self.request
-        return context
-
     def perform_create(self, serializer):
         post = serializer.save(author=self.request.user)
-        images = self.request.FILES.getlist('images')  # Обратите внимание на множественное число
+        images = self.request.FILES.getlist('image')  # поддержка нескольких файлов
         for image in images:
             PostImage.objects.create(post=post, image=image)
 
