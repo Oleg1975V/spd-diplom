@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Конфигурация
+    const API_BASE_URL = 'http://127.0.0.1:8000/api';
+    const MEDIA_URL = 'http://127.0.0.1:8000/media';
+
     // Элементы DOM
     const elements = {
         newPostForm: document.getElementById('new-post-form'),
@@ -7,27 +11,21 @@ document.addEventListener('DOMContentLoaded', () => {
         postsContainer: document.getElementById('posts'),
         loginForm: document.getElementById('login-form'),
         registerForm: document.getElementById('register-form'),
-        logoutBtn: document.getElementById('logout-btn')
-    };
-
-    // Проверка элементов
-    if (Object.values(elements).some(el => !el)) {
-        console.error('Some required elements are missing');
-        return;
-    }
-
-    // Показать ошибку
-    const showError = (message) => {
-        console.error(message);
-        alert(message);
+        logoutBtn: document.getElementById('logout-btn'),
+        userInfo: document.getElementById('user-info'),
+        usernameDisplay: document.getElementById('username-display'),
+        authForms: document.getElementById('auth-forms'),
+        showLoginBtn: document.getElementById('show-login'),
+        showRegisterBtn: document.getElementById('show-register')
     };
 
     // Проверка авторизации
     const checkAuth = async () => {
         const token = localStorage.getItem('access_token');
         if (!token) return false;
+
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/posts/', {
+            const response = await fetch(`${API_BASE_URL}/posts/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             return response.ok;
@@ -37,14 +35,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Обновить интерфейс
+    // Обновление UI
     const updateUI = async () => {
         const isAuth = await checkAuth();
-        document.getElementById('auth-forms').classList.toggle('hidden', isAuth);
-        document.getElementById('new-post-form').classList.toggle('hidden', !isAuth);
-        document.getElementById('user-info').classList.toggle('hidden', !isAuth);
+        elements.authForms.classList.toggle('hidden', isAuth);
+        elements.newPostForm.classList.toggle('hidden', !isAuth);
+        elements.userInfo.classList.toggle('hidden', !isAuth);
+        
         if (isAuth) {
+            const username = localStorage.getItem('username');
+            if (username) elements.usernameDisplay.textContent = username;
             await fetchPosts();
+        } else {
+            elements.postsContainer.innerHTML = '<p>Войдите или зарегистрируйтесь для просмотра постов</p>';
         }
     };
 
@@ -53,36 +56,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const token = localStorage.getItem('access_token');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            const response = await fetch('http://127.0.0.1:8000/api/posts/', { headers });
-            if (!response.ok) throw new Error('Failed to fetch posts');
+            
+            const response = await fetch(`${API_BASE_URL}/posts/`, { headers });
+            if (!response.ok) throw new Error('Ошибка загрузки постов');
+            
             const data = await response.json();
             renderPosts(data.results || data);
         } catch (error) {
-            console.error('Error loading posts:', error);
-            showError(error.message);
+            console.error('Error:', error);
+            alert(error.message);
         }
     };
 
     // Отрисовка постов
     const renderPosts = (posts) => {
-        if (!elements.postsContainer) return;
         elements.postsContainer.innerHTML = posts.length ? posts.map(post => `
             <div class="post" data-id="${post.id}">
                 <h3>${post.author}</h3>
                 <p>${post.text}</p>
-                <div class="post-images">
-                    ${post.images.map(img => `<img src="${img}" alt="Post image">`).join('')}
-                </div>
-                <p class="date">${new Date(post.created_at).toLocaleString()}</p>
+                ${post.images && post.images.length ? `
+                    <div class="post-images">
+                        ${post.images.map(img => `<img src="${img}" alt="Post image" style="max-width: 100%; height: auto;">`).join('')}
+                    </div>
+                ` : ''}
+                <p>${new Date(post.created_at).toLocaleString()}</p>
                 <button class="like-btn" data-id="${post.id}">
-                    ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
+                    ❤️ ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
                 </button>
                 <div class="comments">
-                    <h4>Комментарии:</h4>
-                    ${(post.comments || []).map(c => `
+                    <h4>Комментарии (${post.comments ? post.comments.length : 0})</h4>
+                    ${(post.comments || []).map(comment => `
                         <div class="comment">
-                            <strong>${c.author}:</strong> ${c.text}
-                            <small>${new Date(c.created_at).toLocaleString()}</small>
+                            <strong>${comment.author}:</strong> ${comment.text}
+                            <small>${new Date(comment.created_at).toLocaleString()}</small>
                         </div>
                     `).join('')}
                     <form class="comment-form" data-id="${post.id}">
@@ -92,153 +98,166 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `).join('') : '<p>Пока нет постов</p>';
-        // Обработчики событий
+
+        // Назначение обработчиков
         document.querySelectorAll('.like-btn').forEach(btn => {
-            btn.addEventListener('click', () => handleLikeToggle(btn.dataset.id));
+            btn.addEventListener('click', () => handleLike(btn.dataset.id));
         });
+
         document.querySelectorAll('.comment-form').forEach(form => {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const input = form.querySelector('input');
-                handleCommentSubmit(form.dataset.id, input.value);
+                handleComment(form.dataset.id, input.value);
                 input.value = '';
             });
         });
     };
 
-    // Создать пост
-    const handleNewPostSubmit = async (e) => {
+    // Создание поста
+    const handleNewPost = async (e) => {
         e.preventDefault();
-        const imagesFiles = elements.newPostImages.files;
-        if (imagesFiles.length > 10) {
-            showError('Необходимо загрузить не более 10 изображений.');
-            return;
-        }
+        const text = elements.newPostText.value.trim();
+        const images = elements.newPostImages.files;
+
+        if (!text) return alert('Введите текст поста');
+        if (images.length > 10) return alert('Не более 10 изображений');
+
         const formData = new FormData();
-        formData.append('text', elements.newPostText.value);
-        for (let i = 0; i < imagesFiles.length; i++) {
-            formData.append('images', imagesFiles[i]);
-        }
+        formData.append('text', text);
+        Array.from(images).forEach(img => formData.append('images', img));
+
         try {
             const token = localStorage.getItem('access_token');
-            if (!token) throw new Error('Необходимо авторизоваться');
-            const response = await fetch('http://127.0.0.1:8000/api/posts/', {
+            if (!token) throw new Error('Требуется авторизация');
+
+            const response = await fetch(`${API_BASE_URL}/posts/`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Ошибка создания поста');
-            }
+
+            if (!response.ok) throw new Error('Ошибка создания поста');
+
             elements.newPostText.value = '';
             elements.newPostImages.value = '';
             await fetchPosts();
         } catch (error) {
-            console.error('Ошибка создания поста:', error);
-            showError(error.message);
+            console.error('Error:', error);
+            alert(error.message);
         }
     };
 
-    // Остальные обработчики (комментарии, лайки, авторизация)
-    const handleCommentSubmit = async (postId, text) => {
+    // Остальные обработчики (лайки, комментарии, авторизация)
+    const handleLike = async (postId) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/posts/${postId}/comments/`, {
+            const response = await fetch(`${API_BASE_URL}/posts/${postId}/like/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                },
-                body: JSON.stringify({ text })
-            });
-            if (!response.ok) throw new Error('Ошибка добавления комментария');
-            await fetchPosts();
-        } catch (error) {
-            showError(error.message);
-        }
-    };
-
-    const handleLikeToggle = async (postId) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/api/posts/${postId}/like/`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    'Content-Type': 'application/json'
                 }
             });
             if (!response.ok) throw new Error('Ошибка лайка');
             await fetchPosts();
         } catch (error) {
-            showError(error.message);
+            console.error('Error:', error);
+            alert(error.message);
+        }
+    };
+
+    const handleComment = async (postId, text) => {
+        if (!text.trim()) return alert('Введите комментарий');
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+            if (!response.ok) throw new Error('Ошибка комментария');
+            await fetchPosts();
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message);
         }
     };
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/token/', {
+            const response = await fetch(`${API_BASE_URL}/token/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: document.getElementById('login-username').value,
-                    password: document.getElementById('login-password').value
-                })
+                body: JSON.stringify({ username, password })
             });
-            if (!response.ok) throw new Error('Неверные учетные данные');
+
+            if (!response.ok) throw new Error('Ошибка авторизации');
+
             const { access, refresh } = await response.json();
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
+            localStorage.setItem('username', username);
             await updateUI();
         } catch (error) {
-            showError(error.message);
+            console.error('Error:', error);
+            alert(error.message);
         }
     };
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        const username = document.getElementById('register-username').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/register/', {
+            const response = await fetch(`${API_BASE_URL}/register/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: document.getElementById('register-username').value,
-                    email: document.getElementById('register-email').value,
-                    password: document.getElementById('register-password').value
-                })
+                body: JSON.stringify({ username, email, password })
             });
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(Object.values(error).join(', '));
+                const errorData = await response.json();
+                throw new Error(Object.values(errorData).join(', '));
             }
-            showError('Регистрация успешна! Теперь войдите.');
-            document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('register-form').classList.add('hidden');
+
+            alert('Регистрация успешна! Войдите в систему.');
+            elements.loginForm.classList.remove('hidden');
+            elements.registerForm.classList.add('hidden');
         } catch (error) {
-            showError(error.message);
+            console.error('Error:', error);
+            alert(error.message);
         }
     };
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        window.location.reload();
+        localStorage.removeItem('username');
+        updateUI();
     };
 
     // Инициализация
     const init = () => {
-        elements.newPostForm.addEventListener('submit', handleNewPostSubmit);
+        elements.newPostForm.addEventListener('submit', handleNewPost);
         elements.loginForm.addEventListener('submit', handleLogin);
         elements.registerForm.addEventListener('submit', handleRegister);
         elements.logoutBtn.addEventListener('click', handleLogout);
-        document.getElementById('show-login').addEventListener('click', () => {
-            document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('register-form').classList.add('hidden');
+        elements.showLoginBtn.addEventListener('click', () => {
+            elements.loginForm.classList.remove('hidden');
+            elements.registerForm.classList.add('hidden');
         });
-        document.getElementById('show-register').addEventListener('click', () => {
-            document.getElementById('register-form').classList.remove('hidden');
-            document.getElementById('login-form').classList.add('hidden');
+        elements.showRegisterBtn.addEventListener('click', () => {
+            elements.registerForm.classList.remove('hidden');
+            elements.loginForm.classList.add('hidden');
         });
         updateUI();
     };
