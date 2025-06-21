@@ -1,5 +1,13 @@
 from django.urls import path
-from .views import PostListCreateView, PostDetailView, CommentCreateView, LikeToggleView, index, RegisterView
+from .views import (
+    PostListCreateView,
+    PostDetailView,
+    CommentCreateView,
+    LikeToggleView,
+    index,
+    RegisterView,
+    DeleteImageView  # Добавьте этот импорт
+)
 
 urlpatterns = [
     path('', index, name='index'),
@@ -8,4 +16,5 @@ urlpatterns = [
     path('posts/<int:post_id>/comments/', CommentCreateView.as_view(), name='comment-create'),
     path('posts/<int:post_id>/like/', LikeToggleView.as_view(), name='like-toggle'),
     path('register/', RegisterView.as_view(), name='register'),
+    path('posts/<int:pk>/delete_image/', DeleteImageView.as_view(), name='delete-image'),
 ]

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Post, PostImage, Comment, Like
 
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True,
@@ -38,6 +39,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+
 class PostImageSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)
 
@@ -49,6 +51,7 @@ class PostImageSerializer(serializers.ModelSerializer):
         if value.size > 5 * 1024 * 1024:  # 5MB
             raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
         return value
+
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
@@ -78,14 +81,19 @@ class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    can_edit = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'images', 'created_at', 'comments', 'likes_count']
+        fields = ['id', 'author', 'text', 'images', 'created_at', 'comments', 'likes_count', 'can_edit']
         read_only_fields = ['id', 'created_at', 'likes_count']
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+
+    def get_can_edit(self, obj):
+        request = self.context.get('request')
+        return request and (request.user == obj.author or request.user.is_staff)
 
     def get_images(self, obj):
         request = self.context.get('request')
