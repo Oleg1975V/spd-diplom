@@ -17,9 +17,15 @@ class PostListCreateView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        # Сортируем по убыванию даты создания (новые сначала)
+        return Post.objects.all().order_by('-created_at')
+
     def perform_create(self, serializer):
+        # Создание поста требует авторизации
         post = serializer.save(author=self.request.user)
         images = self.request.FILES.getlist('image')  # поддержка нескольких файлов
+
         for image in images:
             PostImage.objects.create(post=post, image=image)
 
