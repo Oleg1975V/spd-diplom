@@ -113,3 +113,15 @@ class PostSerializer(serializers.ModelSerializer):
         for image_data in images_data:
             PostImage.objects.create(post=post, image=image_data)
         return post
+
+    def update(self, instance, validated_data):
+        # Обновляем текст
+        instance.text = validated_data.get('text', instance.text)
+        instance.save()
+
+        # Обработка новых изображений
+        if 'images' in self.context.get('request').FILES:
+            for image in self.context.get('request').FILES.getlist('images'):
+                PostImage.objects.create(post=instance, image=image)
+
+        return instance

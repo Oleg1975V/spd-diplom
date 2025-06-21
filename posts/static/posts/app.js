@@ -46,32 +46,49 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAuth) {
             const username = localStorage.getItem('username');
             if (username) elements.usernameDisplay.textContent = username;
-            await fetchPosts();
-        } else {
-            elements.postsContainer.innerHTML = '<p>Войдите или зарегистрируйтесь для просмотра постов</p>';
         }
+        await fetchPosts(); // Всегда загружаем посты, даже для неавторизованных
     };
 
-    // Загрузка постов
+    // Загрузка постов (работает для всех)
     const fetchPosts = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const headers = {};
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
             
             const response = await fetch(`${API_BASE_URL}/posts/`, { headers });
-            if (!response.ok) throw new Error('Ошибка загрузки постов');
+            
+            if (!response.ok) {
+                // Не показываем ошибку 401 (Unauthorized) пользователю
+                if (response.status !== 401) {
+                    throw new Error('Ошибка загрузки постов');
+                }
+                return;
+            }
             
             const data = await response.json();
             renderPosts(data.results || data);
         } catch (error) {
             console.error('Error:', error);
-            alert(error.message);
+            // Показываем только не-401 ошибки
+            if (!error.message.includes('401')) {
+                alert(error.message);
+            }
         }
     };
 
     // Отрисовка постов
     const renderPosts = (posts) => {
-        elements.postsContainer.innerHTML = posts.length ? posts.map(post => `
+        if (!posts || posts.length === 0) {
+            elements.postsContainer.innerHTML = '<p>Пока нет постов</p>';
+            return;
+        }
+
+        elements.postsContainer.innerHTML = posts.map(post => `
             <div class="post" data-id="${post.id}">
                 <div class="post-header">
                     <h3>${post.author}</h3>
@@ -89,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 ` : ''}
                 <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>
-                <button class="like-btn" data-id="${post.id}">
+                <button class="like-btn" data-id="${post.id}" ${!localStorage.getItem('access_token') ? 'disabled' : ''}>
                     ❤️ ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
                 </button>
                 <div class="comments">
@@ -100,13 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             <small>${new Date(comment.created_at).toLocaleString()}</small>
                         </div>
                     `).join('')}
-                    <form class="comment-form" data-id="${post.id}">
-                        <input type="text" placeholder="Ваш комментарий" required>
-                        <button type="submit">Отправить</button>
-                    </form>
+                    ${localStorage.getItem('access_token') ? `
+                        <form class="comment-form" data-id="${post.id}">
+                            <input type="text" placeholder="Ваш комментарий" required>
+                            <button type="submit">Отправить</button>
+                        </form>
+                    ` : '<p>Войдите, чтобы оставить комментарий</p>'}
                 </div>
             </div>
-        `).join('') : '<p>Пока нет постов</p>';
+        `).join('');
 
         // Назначение обработчиков
         document.querySelectorAll('.like-btn').forEach(btn => {
@@ -169,6 +188,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const showEditForm = async (postId) => {
         try {
             const token = localStorage.getItem('access_token');
+            if (!token) throw new Error('Требуется авторизация');
+
             const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -311,6 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleLike = async (postId) => {
         try {
             const token = localStorage.getItem('access_token');
+            if (!token) throw new Error('Требуется авторизация');
+
             const response = await fetch(`${API_BASE_URL}/posts/${postId}/like/`, {
                 method: 'POST',
                 headers: {
@@ -334,6 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const token = localStorage.getItem('access_token');
+            if (!token) throw new Error('Требуется авторизация');
+
             const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments/`, {
                 method: 'POST',
                 headers: {
@@ -365,7 +390,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ username, password })
             });
 
-            if (!response.ok) throw new Error('Ошибка авторизации');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Ошибка авторизации');
+            }
 
             const { access, refresh } = await response.json();
             localStorage.setItem('access_token', access);
