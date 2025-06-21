@@ -182,3 +182,45 @@ button:hover {
 .modal-buttons button {
     flex: 1;
 }
+
+/* Базовые стили для контейнера с фотографиями */
+.post-images {
+    display: grid;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+/* Вариант 2: Мозаичная сетка (лучше для разного размера) */
+.post-images.masonry {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-auto-rows: 10px; /* Базовый размер строки */
+}
+
+.post-images.masonry img {
+    width: 100%;
+    border-radius: 8px;
+    grid-row-end: span 20; /* Примерное значение, подбирается под ваши фото */
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .post-images {
+        grid-template-columns: 1fr; /* Одна колонка на мобильных */
+    }
+    
+    .post-images img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+/* Дополнительные эффекты */
+.post-images img {
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.post-images img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}

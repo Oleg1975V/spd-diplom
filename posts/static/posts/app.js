@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
         authButtons: document.getElementById('auth-buttons')
     };
 
+    // Инициализированные Swiper-карусели
+    const swiperInstances = [];
+
     // Проверка авторизации
     const checkAuth = async () => {
         const token = localStorage.getItem('access_token');
@@ -47,10 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = localStorage.getItem('username');
             if (username) elements.usernameDisplay.textContent = username;
         }
-        await fetchPosts(); // Всегда загружаем посты, даже для неавторизованных
+        await fetchPosts();
     };
 
-    // Загрузка постов (работает для всех)
+    // Загрузка постов
     const fetchPosts = async () => {
         try {
             const token = localStorage.getItem('access_token');
@@ -63,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/posts/`, { headers });
             
             if (!response.ok) {
-                // Не показываем ошибку 401 (Unauthorized) пользователю
                 if (response.status !== 401) {
                     throw new Error('Ошибка загрузки постов');
                 }
@@ -74,15 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPosts(data.results || data);
         } catch (error) {
             console.error('Error:', error);
-            // Показываем только не-401 ошибки
             if (!error.message.includes('401')) {
                 alert(error.message);
             }
         }
     };
 
-    // Отрисовка постов
+    // Отрисовка постов с каруселями
     const renderPosts = (posts) => {
+        // Уничтожаем старые карусели
+        swiperInstances.forEach(swiper => swiper.destroy());
+        swiperInstances.length = 0;
+
         if (!posts || posts.length === 0) {
             elements.postsContainer.innerHTML = '<p>Пока нет постов</p>';
             return;
@@ -101,8 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <p class="post-text">${post.text}</p>
                 ${post.images && post.images.length ? `
-                    <div class="post-images">
-                        ${post.images.map(img => `<img src="${img}" alt="Post image" style="max-width: 100%; height: auto;">`).join('')}
+                    <div class="swiper post-images">
+                        <div class="swiper-wrapper">
+                            ${post.images.map(img => `
+                                <div class="swiper-slide">
+                                    <img src="${img}" loading="lazy" alt="Изображение поста ${post.author}"
+     onerror="this.onerror=null;this.src='{% static 'posts/default-image.jpg' %}'">
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="swiper-pagination"></div>
+                        <div class="swiper-button-prev"></div>
+                        <div class="swiper-button-next"></div>
                     </div>
                 ` : ''}
                 <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>
@@ -122,10 +137,35 @@ document.addEventListener('DOMContentLoaded', () => {
                             <input type="text" placeholder="Ваш комментарий" required>
                             <button type="submit">Отправить</button>
                         </form>
-                    ` : '<p>Войдите, чтобы оставить комментарий</p>'}
+                    ` : '<p>Зарегистрируйтесь и войдите, чтобы оставить комментарий или поставить лайк</p>'}
                 </div>
             </div>
         `).join('');
+
+        // Инициализация каруселей
+        document.querySelectorAll('.swiper').forEach(swiperEl => {
+            const swiper = new Swiper(swiperEl, {
+                loop: true,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+                autoplay: {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                },
+                effect: 'slide',
+                grabCursor: true,
+                centeredSlides: true,
+                slidesPerView: 'auto',
+                spaceBetween: 10,
+            });
+            swiperInstances.push(swiper);
+        });
 
         // Назначение обработчиков
         document.querySelectorAll('.like-btn').forEach(btn => {

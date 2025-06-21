@@ -101,8 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <p class="post-text">${post.text}</p>
                 ${post.images && post.images.length ? `
-                    <div class="post-images">
-                        ${post.images.map(img => `<img src="${img}" alt="Post image" style="max-width: 100%; height: auto;">`).join('')}
+                    <div class="post-images masonry"> <!-- Добавлен класс masonry -->
+                    ${post.images.map(img => `
+                        <img src="${img}" alt="Post image" loading="lazy"> <!-- lazy loading -->
+                    `).join('')}
                     </div>
                 ` : ''}
                 <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>

@@ -6,45 +6,7 @@
     <title>Социальная сеть</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'posts/styles.css' %}">
-    <style>
-        .hidden { display: none; }
-        #user-info {
-            margin: 10px 0;
-            padding: 10px;
-            background: #f0f0f0;
-            border-radius: 5px;
-        }
-        #logout-btn {
-            margin-left: 10px;
-            cursor: pointer;
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-        }
-        #auth-forms {
-            margin-bottom: 20px;
-        }
-        #auth-buttons button {
-            margin-right: 10px;
-        }
-        form {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        input, textarea, button {
-            display: block;
-            margin-bottom: 10px;
-            width: 100%;
-            padding: 8px;
-        }
-        button {
-            cursor: pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
 </head>
 <body>
     <div id="app" class="container">
@@ -84,6 +46,7 @@
         <!-- Список постов -->
         <div id="posts"></div>
     </div>
+    <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
     <script src="{% static 'posts/app.js' %}"></script>
 </body>
 </html>
