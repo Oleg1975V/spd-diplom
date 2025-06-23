@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Post, PostImage, Comment, Like
@@ -46,10 +47,21 @@ class PostImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostImage
         fields = ['id', 'image']
+        read_only_fields = ['id']
 
     def validate_image(self, value):
+        # Проверка размера
         if value.size > 5 * 1024 * 1024:  # 5MB
             raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
+        
+        # Проверка формата
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        extension = os.path.splitext(value.name)[1].lower()
+        if extension not in valid_extensions:
+            raise serializers.ValidationError(
+                "Неподдерживаемый формат изображения. Допустимые форматы: JPG, JPEG, PNG, GIF, WEBP"
+            )
+        
         return value
 
 
@@ -98,7 +110,21 @@ class PostSerializer(serializers.ModelSerializer):
     def get_images(self, obj):
         request = self.context.get('request')
         images = obj.images.all()
-        return [request.build_absolute_uri(image.image.url) for image in images] if request else [image.image.url for image in images]
+        result = []
+
+        for image in images:
+            try:
+                if image.image:  # Проверяем, есть ли изображение
+                    url = image.image.url
+                    if request:
+                        url = request.build_absolute_uri(url)
+                    result.append(url)
+            except ValueError:
+                # Если файл отсутствует, пропускаем его
+                continue
+
+        return result
+
 
     def validate_text(self, value):
         if len(value.strip()) < 5:

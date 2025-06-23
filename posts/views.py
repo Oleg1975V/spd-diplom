@@ -1,7 +1,8 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
-from rest_framework.views import APIView  # Добавлен этот импорт
-from rest_framework.exceptions import PermissionDenied  # Добавлен этот импорт
+from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import Post, Comment, Like, PostImage
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
@@ -18,16 +19,20 @@ class PostListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        # Сортируем по убыванию даты создания (новые сначала)
         return Post.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
-        # Создание поста требует авторизации
         post = serializer.save(author=self.request.user)
-        images = self.request.FILES.getlist('image')  # поддержка нескольких файлов
+        images = self.request.FILES.getlist('image')
 
         for image in images:
-            PostImage.objects.create(post=post, image=image)
+            try:
+                PostImage.objects.create(post=post, image=image)
+            except (ValidationError, DjangoValidationError) as e:
+                post.delete()
+                raise serializers.ValidationError(
+                    {'images': str(e)}
+                )
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -126,8 +131,15 @@ class DeleteImageView(APIView):
 
         try:
             image = post.images.get(image__endswith=image_name)
-            image.delete()
-            return Response({'status': 'image deleted'}, status=status.HTTP_200_OK)
+            try:
+                image.image.delete(save=False)
+                image.delete()
+                return Response({'status': 'image deleted'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response(
+                    {'error': f'Error deleting image file: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         except PostImage.DoesNotExist:
             return Response(
                 {'error': 'Image not found'},
