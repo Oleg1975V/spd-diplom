@@ -160,10 +160,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="post-actions">
                             <button class="edit-post-btn" data-id="${post.id}">✏️</button>
                             <button class="delete-post-btn" data-id="${post.id}">🗑️</button>
+                            <button class="delete-all-comments-btn" data-id="${post.id}" style="color: red;">❌ Удалить все комментарии</button>
                         </div>
                     ` : ''}
                 </div>
+        
                 <p class="post-text">${post.text}</p>
+        
                 ${post.images && post.images.length ? `
                     <div class="swiper post-images">
                         <div class="swiper-wrapper">
@@ -183,18 +186,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="swiper-button-next"></div>
                     </div>
                 ` : ''}
+        
                 <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>
+        
                 <button class="like-btn" data-id="${post.id}" ${!localStorage.getItem('access_token') ? 'disabled' : ''}>
                     ❤️ ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
                 </button>
+        
                 <div class="comments">
                     <h4>Комментарии (${post.comments ? post.comments.length : 0})</h4>
                     ${(post.comments || []).map(comment => `
                         <div class="comment">
                             <strong>${comment.author}:</strong> ${comment.text}
                             <small>${new Date(comment.created_at).toLocaleString()}</small>
+                            ${localStorage.getItem('access_token') ? (
+                                post.can_edit ? `
+                                    <button class="delete-comment-btn" data-id="${comment.id}" style="color: red;">❌ Удалить</button>
+                                ` : ''
+                            ) : ''}
                         </div>
                     `).join('')}
+        
                     ${localStorage.getItem('access_token') ? `
                         <form class="comment-form" data-id="${post.id}">
                             <input type="text" placeholder="Ваш комментарий" required>
@@ -264,10 +276,38 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => showEditForm(btn.dataset.id));
         });
 
-        document.querySelectorAll('.delete-post-btn').forEach(btn => {
-            btn.addEventListener('click', () => handleDeletePost(btn.dataset.id));
+        document.querySelectorAll('.delete-comment-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const commentId = btn.dataset.id;
+                const postId = btn.closest('.post').dataset.id;
+        
+                if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) return;
+        
+                try {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) throw new Error('Требуется авторизация');
+        
+                    const response = await fetch(`${API_BASE_URL}/comments/${commentId}/delete/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+        
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Ошибка удаления комментария');
+                    }
+        
+                    alert('Комментарий успешно удален');
+                    await fetchPosts(); // Обновляем список постов
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError(error.message);
+                }
+            });
         });
-    };
+    }; // <-- Этой закрывающей скобки не хватало (закрывает функцию renderPosts)
 
     // Создание поста с индикатором загрузки
     const handleNewPost = async (e) => {

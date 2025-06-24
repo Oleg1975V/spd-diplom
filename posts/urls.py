@@ -6,7 +6,8 @@ from .views import (
     LikeToggleView,
     index,
     RegisterView,
-    DeleteImageView  # Добавьте этот импорт
+    DeleteImageView,
+    DeleteCommentView,
 )
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
     path('posts/<int:post_id>/like/', LikeToggleView.as_view(), name='like-toggle'),
     path('register/', RegisterView.as_view(), name='register'),
     path('posts/<int:pk>/delete_image/', DeleteImageView.as_view(), name='delete-image'),
+    path('comments/<int:pk>/delete/', DeleteCommentView.as_view(), name='delete-comment'),
 ]

@@ -145,3 +145,19 @@ class DeleteImageView(APIView):
                 {'error': 'Image not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class DeleteCommentView(generics.DestroyAPIView):
+    queryset = Comment.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        comment = self.get_object()
+        post = comment.post
+        if post.author != request.user and not request.user.is_staff:
+            return Response(
+                {'error': 'У вас нет прав на удаление этого комментария'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        comment.delete()
+        return Response({'message': 'Комментарий успешно удален'}, status=status.HTTP_200_OK)

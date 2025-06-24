@@ -58,7 +58,7 @@ button {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%;
+    width: auto;
     transition: background-color 0.3s;
 }
 
@@ -414,10 +414,6 @@ button:disabled {
     .swiper-button-next,
     .swiper-button-prev {
         display: none;
-    }
-    
-    .post-actions button {
-        font-size: 1em;
     }
     
     .error-message {
