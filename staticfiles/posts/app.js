@@ -48,17 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Проверка авторизации
     const checkAuth = async () => {
         const token = localStorage.getItem('access_token');
-        if (!token) return false;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/posts/`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            return response.ok;
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            return false;
-        }
+        return !!token;
     };
 
     // Обновление UI
@@ -80,35 +70,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPage = 1;
     const fetchPosts = async (page = 1) => {
         const loadingIndicator = showLoading(elements.postsContainer, 'Загрузка постов...');
-        
         try {
-            const token = localStorage.getItem('access_token');
             const headers = {};
-            
+        // Добавляем Authorization только если есть access_token
+        const token = localStorage.getItem('access_token');
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            
-            // Добавляем параметр page в URL
             const response = await fetch(`${API_BASE_URL}/posts/?page=${page}`, { headers });
-            
             if (!response.ok) {
-                if (response.status !== 401) {
                     throw new Error('Ошибка загрузки постов');
                 }
-                return;
-            }
-            
             const data = await response.json();
             renderPosts(data.results || data);
-        
-            // Добавляем пагинацию в интерфейс
             renderPagination(data);
         } catch (error) {
             console.error('Error:', error);
-            if (!error.message.includes('401')) {
                 showError('Ошибка загрузки постов: ' + error.message);
-            }
         } finally {
             hideLoading(elements.postsContainer);
         }

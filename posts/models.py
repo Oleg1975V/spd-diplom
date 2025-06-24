@@ -6,6 +6,7 @@ from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
+
 def validate_image_size(value):
     filesize = value.size
     max_size = 5 * 1024 * 1024  # 5MB
