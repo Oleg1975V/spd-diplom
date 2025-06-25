@@ -53,7 +53,7 @@ class PostImageSerializer(serializers.ModelSerializer):
         # Проверка размера
         if value.size > 5 * 1024 * 1024:  # 5MB
             raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
-        
+
         # Проверка формата
         valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
         extension = os.path.splitext(value.name)[1].lower()
@@ -61,7 +61,7 @@ class PostImageSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Неподдерживаемый формат изображения. Допустимые форматы: JPG, JPEG, PNG, GIF, WEBP"
             )
-        
+
         return value
 
 

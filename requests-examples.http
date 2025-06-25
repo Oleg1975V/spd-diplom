@@ -44,7 +44,7 @@ Content-Type: image/jpeg
 ### 2.3 Создание поста с авторизацией (должен работать)
 POST http://127.0.0.1:8000/api/posts/
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwMjU0Nzk3LCJpYXQiOjE3NTAyNTQ0OTcsImp0aSI6IjUwOWRhOTJiNDk0YjRlMDM4ZWI4ZDRmODU3MWRhOTM3IiwidXNlcl9pZCI6OH0.YRGb0Ae9QuReX-vGhgdXD96EmItRvJeSygNptC8BnS8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODYxNzA0LCJpYXQiOjE3NTA4NjE0MDQsImp0aSI6IjA3ODQ1ZjUwNDc1MzQ1MzY4NTNkNjM0N2UxYjVlNDk5IiwidXNlcl9pZCI6NjB9.J2UbRFI3SiLkgShE0Kf5YuClY5-rBB1Bs_7x11X1iqY
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="text"
@@ -70,7 +70,7 @@ Content-Type: application/json
 ### 3.2 Создание комментария с авторизацией (должен работать)
 POST http://127.0.0.1:8000/api/posts/1/comments/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwMjU0Nzk3LCJpYXQiOjE3NTAyNTQ0OTcsImp0aSI6IjUwOWRhOTJiNDk0YjRlMDM4ZWI4ZDRmODU3MWRhOTM3IiwidXNlcl9pZCI6OH0.YRGb0Ae9QuReX-vGhgdXD96EmItRvJeSygNptC8BnS8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODYxNzA0LCJpYXQiOjE3NTA4NjE0MDQsImp0aSI6IjA3ODQ1ZjUwNDc1MzQ1MzY4NTNkNjM0N2UxYjVlNDk5IiwidXNlcl9pZCI6NjB9.J2UbRFI3SiLkgShE0Kf5YuClY5-rBB1Bs_7x11X1iqY
 
 {
   "text": "Отличный пост! Класс!!"
@@ -89,24 +89,24 @@ Content-Type: application/json
 ### 4.2 Поставить лайк с авторизацией (должен работать)
 POST http://127.0.0.1:8000/api/posts/1/like/
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODYxNzA0LCJpYXQiOjE3NTA4NjE0MDQsImp0aSI6IjA3ODQ1ZjUwNDc1MzQ1MzY4NTNkNjM0N2UxYjVlNDk5IiwidXNlcl9pZCI6NjB9.J2UbRFI3SiLkgShE0Kf5YuClY5-rBB1Bs_7x11X1iqY
 
 ### 4.3 Убрать лайк (повторный запрос)
 POST http://127.0.0.1:8000/api/posts/1/like/
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODYxNzA0LCJpYXQiOjE3NTA4NjE0MDQsImp0aSI6IjA3ODQ1ZjUwNDc1MzQ1MzY4NTNkNjM0N2UxYjVlNDk5IiwidXNlcl9pZCI6NjB9.J2UbRFI3SiLkgShE0Kf5YuClY5-rBB1Bs_7x11X1iqY
 
 ### 5. Тестирование прав доступа
 
 ### 5.1 Попытка удалить чужой пост (должна быть ошибка 403)
 DELETE http://127.0.0.1:8000/api/posts/1/
 Content-Type: application/json
-Authorization: Bearer {{another_user_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODYxNzA0LCJpYXQiOjE3NTA4NjE0MDQsImp0aSI6IjA3ODQ1ZjUwNDc1MzQ1MzY4NTNkNjM0N2UxYjVlNDk5IiwidXNlcl9pZCI6NjB9.J2UbRFI3SiLkgShE0Kf5YuClY5-rBB1Bs_7x11X1iqY
 
 ### 5.2 Удаление своего поста (должен работать)
 DELETE http://127.0.0.1:8000/api/posts/2/
 Content-Type: application/json
-Authorization: Bearer {{access_token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODYxNzA0LCJpYXQiOjE3NTA4NjE0MDQsImp0aSI6IjA3ODQ1ZjUwNDc1MzQ1MzY4NTNkNjM0N2UxYjVlNDk5IiwidXNlcl9pZCI6NjB9.J2UbRFI3SiLkgShE0Kf5YuClY5-rBB1Bs_7x11X1iqY
 
 ### 6. Дополнительные тесты
 
