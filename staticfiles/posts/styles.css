@@ -138,19 +138,6 @@ button:disabled {
     transition: opacity 0.3s;
 }
 
-.image-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 14px;
-    z-index: 10;
-}
-
 .swiper-slide {
     position: relative;
 }
@@ -229,6 +216,16 @@ button:disabled {
 
 .comment-form input[type="text"] {
     width: calc(100% - 22px);
+}
+
+.delete-comment-btn {
+    background-color: transparent !important;
+    color: red !important;
+    border: none !important;
+    font-size: 16px;
+    padding: 0 8px !important;
+    margin-left: auto !important;
+    cursor: pointer;
 }
 
 /* ==================== */

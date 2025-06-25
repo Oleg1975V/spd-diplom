@@ -172,11 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${post.images.map(img => `
                                 <div class="swiper-slide">
                                     <img src="${img}" 
-                                         loading="lazy" 
-                                         alt="Изображение поста ${post.author}"
-                                         onerror="this.src='${DEFAULT_IMAGE}';this.onerror=null;"
-                                         class="post-image">
-                                    <div class="image-loading">Загрузка...</div>
+                                        loading="lazy" 
+                                        alt="Изображение поста ${post.author}"
+                                        onerror="this.src='${DEFAULT_IMAGE}';this.onerror=null;"
+                                        class="post-image">
                                 </div>
                             `).join('')}
                         </div>
@@ -193,14 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
         
                 <div class="comments">
-                    <h4>Комментарии (${post.comments ? post.comments.length : 0})</h4>
+                    <h5>Комментарии (${post.comments ? post.comments.length : 0})</h5>
                     ${(post.comments || []).map(comment => `
                         <div class="comment">
                             <strong>${comment.author}:</strong> ${comment.text}
                             <small>${new Date(comment.created_at).toLocaleString()}</small>
                             ${localStorage.getItem('access_token') ? (
                                 post.can_edit ? `
-                                    <button class="delete-comment-btn" data-id="${comment.id}" style="color: red;">❌ Удалить</button>
+                                    <button class="btn btn-link text-danger ms-auto">❌ Удалить</button>
                                 ` : ''
                             ) : ''}
                         </div>
@@ -218,22 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Инициализация каруселей с обработкой загрузки изображений
         document.querySelectorAll('.swiper').forEach(swiperEl => {
-            // Показываем индикаторы загрузки для всех изображений
-            swiperEl.querySelectorAll('.image-loading').forEach(loader => {
-                loader.style.display = 'block';
-            });
-
-            // Скрываем индикаторы после загрузки изображений
-            swiperEl.querySelectorAll('.post-image').forEach(img => {
-                img.onload = () => {
-                    img.parentElement.querySelector('.image-loading').style.display = 'none';
-                };
-                img.onerror = () => {
-                    img.src = DEFAULT_IMAGE;
-                    img.parentElement.querySelector('.image-loading').style.display = 'none';
-                };
-            });
-
+            
             const swiper = new Swiper(swiperEl, {
                 loop: true,
                 pagination: {

@@ -10,7 +10,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         min_length=8,
         style={'input_type': 'password'},
         error_messages={
-            'min_length': 'Пароль должен содержать не менее 8 символов.'
+            'min_length': 'Пароль должен содержать не менее 8 символов, латинские буквы и цифры, спецсимволы.'
         }
     )
     email = serializers.EmailField(required=True)
@@ -22,7 +22,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'username': {
                 'min_length': 4,
                 'error_messages': {
-                    'min_length': 'Имя пользователя должно содержать не менее 4 символов.'
+                    'min_length': 'Имя пользователя должно содержать не менее 4 символов, буквы или цифры, тире, подчеркивание, точка.'
                 }
             }
         }
