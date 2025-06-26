@@ -192,14 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </button>
         
                 <div class="comments">
-                    <h4>Комментарии (${post.comments ? post.comments.length : 0})</h4>
+                    <h5>Комментарии (${post.comments ? post.comments.length : 0})</h5>
                     ${(post.comments || []).map(comment => `
                         <div class="comment">
                             <strong>${comment.author}:</strong> ${comment.text}
                             <small>${new Date(comment.created_at).toLocaleString()}</small>
                             ${localStorage.getItem('access_token') ? (
                                 post.can_edit ? `
-                                    <button class="btn btn-link text-danger">❌ Удалить</button>
+                                    <button class="btn btn-link text-danger ms-auto delete-comment-btn" data-id="${comment.id}">❌ Удалить</button>
                                 ` : ''
                             ) : ''}
                         </div>
@@ -290,7 +290,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-    }; // <-- Этой закрывающей скобки не хватало (закрывает функцию renderPosts)
+    };
+
+    document.querySelectorAll('.delete-post-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const postId = btn.dataset.id;
+            if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) throw new Error('Требуется авторизация');
+                const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Ошибка удаления поста');
+                }
+                alert('Пост успешно удален');
+                await fetchPosts(); // Обновляем список постов
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            }
+        });
+    });
 
     // Создание поста с индикатором загрузки
     const handleNewPost = async (e) => {
