@@ -10,7 +10,6 @@ Content-Type: application/json
   "password": "qawsedr1"
 }
 
-
 ### 1.2 Получение токена (авторизация)
 POST http://127.0.0.1:8000/api/token/
 Content-Type: application/json
@@ -20,13 +19,10 @@ Content-Type: application/json
   "password": "qawsedr1"
 }
 
-### 2. Тестирование постов
 
-### 2.1 Просмотр постов без авторизации (должен работать)
-GET http://127.0.0.1:8000/api/posts/
-Content-Type: application/json
+### 2. Создание поста
 
-### 2.2 Попытка создания поста без авторизации (должна быть ошибка 401)
+### 2.1 Попытка создания поста без авторизации (должна быть ошибка 401)
 POST http://127.0.0.1:8000/api/posts/
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
@@ -41,10 +37,10 @@ Content-Type: image/jpeg
 < ./test.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### 2.3 Создание поста с авторизацией (должен работать)
+### 2.2 Создание поста с авторизацией (должен работать)
 POST http://127.0.0.1:8000/api/posts/
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUyNjQxLCJpYXQiOjE3NTA5NTIzNDEsImp0aSI6IjA2MjAwODg0MGEzMzQyYzE5ZjZkYWYwODk1MjIxNjM4IiwidXNlcl9pZCI6NzV9.QT0SZABwdqzg_uzWuk3etqeB-yIyOhXpt1GLYqlTRPM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxMzA2LCJpYXQiOjE3NTA5NjEwMDYsImp0aSI6IjlhY2M3ZDU0MTMwMzRiYmY5N2NiNjg3MmE5N2M0NjY4IiwidXNlcl9pZCI6Nzh9.jUpEhitFaa_wGkH0AvvpbM4O-S7Rxtpwr4ey1ywjHSo
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="text"
@@ -57,9 +53,22 @@ Content-Type: image/jpeg
 < ./test.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### 3. Тестирование комментариев
 
-### 3.1 Создание комментария без авторизации (должна быть ошибка 401)
+### 3. Просмотр постов
+
+### 3.1 Просмотр постов без авторизации (должен работать)
+GET http://127.0.0.1:8000/api/posts/
+Content-Type: application/json
+
+
+### Получить список всех постов
+GET http://127.0.0.1:8000/api/posts/
+Content-Type: application/json
+
+
+### 4. Тестирование комментариев
+
+### 4.1 Создание комментария без авторизации (должна быть ошибка 401)
 POST http://127.0.0.1:8000/api/posts/1/comments/
 Content-Type: application/json
 
@@ -67,50 +76,57 @@ Content-Type: application/json
   "text": "Попытка без авторизации"
 }
 
-### 3.2 Создание комментария с авторизацией (должен работать)
-POST http://127.0.0.1:8000/api/posts/206/comments/
+### 4.2 Создание комментария с авторизацией (должен работать)
+POST http://127.0.0.1:8000/api/posts/214/comments/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUyOTY0LCJpYXQiOjE3NTA5NTI2NjQsImp0aSI6ImIxM2VlYTM3Mzk3NTRjYmU4YzgzMDg5NGVkODhhNGFiIiwidXNlcl9pZCI6NzV9.-jUU9P0RjpRegI-tUNtNWWS4nsMlafV8pk-fVfvn2Pk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxMzA2LCJpYXQiOjE3NTA5NjEwMDYsImp0aSI6IjlhY2M3ZDU0MTMwMzRiYmY5N2NiNjg3MmE5N2M0NjY4IiwidXNlcl9pZCI6Nzh9.jUpEhitFaa_wGkH0AvvpbM4O-S7Rxtpwr4ey1ywjHSo
 
 {
   "text": "Отличный пост! Класс!!"
 }
 
-### Получить список всех постов
-GET http://127.0.0.1:8000/api/posts/
+### 4.3 Просмотр комментариев без авторизации (должен работать)
+GET http://127.0.0.1:8000/api/posts/214/comments/
 Content-Type: application/json
 
-### 3.3 Просмотр комментариев без авторизации (должен работать)
-GET http://127.0.0.1:8000/api/posts/187/comments/
+### 4.4 Попытка удаления комментария без авторизации (должна быть ошибка 401)
+DELETE http://127.0.0.1:8000/api/comments/190/delete/
 Content-Type: application/json
 
-### 4. Тестирование лайков
+### 4.5 Попытка удаления чужого комментария (должна быть ошибка 403)
+DELETE http://127.0.0.1:8000/api/comments/62/delete/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODc4NTU0LCJpYXQiOjE3NTA4NzgyNTQsImp0aSI6IjhmMjZiYjFhODI5NDRmYjliOWI0MDUwMDc5ZmM3MDI1IiwidXNlcl9pZCI6NjV9.y76j012N7x4DdozLdMFG5Nls1Qkv-pseTqdah0pb3js
 
-### 4.1 Поставить лайк без авторизации (должна быть ошибка 401)
+### 4.6 Удаление своего комментария (должен работать)
+DELETE http://127.0.0.1:8000/api/comments/62/delete/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxMzA2LCJpYXQiOjE3NTA5NjEwMDYsImp0aSI6IjlhY2M3ZDU0MTMwMzRiYmY5N2NiNjg3MmE5N2M0NjY4IiwidXNlcl9pZCI6Nzh9.jUpEhitFaa_wGkH0AvvpbM4O-S7Rxtpwr4ey1ywjHSo
+
+### 4.7 Удаление комментария к своему посту (должен работать, даже если комментарий не ваш)
+DELETE http://127.0.0.1:8000/api/comments/50/delete/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUzMDc5LCJpYXQiOjE3NTA5NTI3NzksImp0aSI6IjBjNzg1N2FmMjUyMTRlMmQ5ZGIwNmE5NzFlN2I0ZDEyIiwidXNlcl9pZCI6NzV9.a5CJ20KsvYoQl8pS20oQOwdek5fbXXdGrwzG8Lbg_Ww
+
+
+### 5. Тестирование лайков
+
+### 5.1 Поставить лайк без авторизации (должна быть ошибка 401)
 POST http://127.0.0.1:8000/api/posts/1/like/
 Content-Type: application/json
 
-### 4.2 Поставить лайк с авторизацией (должен работать)
-POST http://127.0.0.1:8000/api/posts/205/like/
+### 5.2 Поставить лайк с авторизацией (должен работать)
+POST http://127.0.0.1:8000/api/posts/214/like/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUyNjQxLCJpYXQiOjE3NTA5NTIzNDEsImp0aSI6IjA2MjAwODg0MGEzMzQyYzE5ZjZkYWYwODk1MjIxNjM4IiwidXNlcl9pZCI6NzV9.QT0SZABwdqzg_uzWuk3etqeB-yIyOhXpt1GLYqlTRPM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxMzA2LCJpYXQiOjE3NTA5NjEwMDYsImp0aSI6IjlhY2M3ZDU0MTMwMzRiYmY5N2NiNjg3MmE5N2M0NjY4IiwidXNlcl9pZCI6Nzh9.jUpEhitFaa_wGkH0AvvpbM4O-S7Rxtpwr4ey1ywjHSo
 
-### 4.3 Убрать лайк (повторный запрос)
-POST http://127.0.0.1:8000/api/posts/205/like/
+### 5.3 Убрать лайк (повторный запрос)
+POST http://127.0.0.1:8000/api/posts/214/like/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUyNjQxLCJpYXQiOjE3NTA5NTIzNDEsImp0aSI6IjA2MjAwODg0MGEzMzQyYzE5ZjZkYWYwODk1MjIxNjM4IiwidXNlcl9pZCI6NzV9.QT0SZABwdqzg_uzWuk3etqeB-yIyOhXpt1GLYqlTRPM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxNjEwLCJpYXQiOjE3NTA5NjEzMTAsImp0aSI6ImY1MzdlMmM1Y2MxYjRmODRhYzBjNzVjMGNlN2M1ZGY0IiwidXNlcl9pZCI6Nzh9.2hyFxqE8FEUCBTlAEn4HV8OsxIkdvm1KSvUIQ0WHGI4
 
-### 5. Тестирование прав доступа
 
-### 5.1 Попытка удалить чужой пост (должна быть ошибка 403)
-DELETE http://127.0.0.1:8000/api/posts/1/
-Content-Type: application/json
-Authorization: Bearer eiJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODc3ODU4LCJpYXQiOjE3NTA4Nzc1NTgsImp0aSI6ImYwYjQxYWNiM2U4NTRkMjZiNzRhMWY4M2ZkYjA0YzAwIiwidXNlcl9pZCI6NjV9.94-ORG3Y0Hp3KajtjRReQJdDRc9UZt5Mw9h0S5UYars
-
-### 5.2 Удаление своего поста (должен работать)
-DELETE http://127.0.0.1:8000/api/posts/206/
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUzMDc5LCJpYXQiOjE3NTA5NTI3NzksImp0aSI6IjBjNzg1N2FmMjUyMTRlMmQ5ZGIwNmE5NzFlN2I0ZDEyIiwidXNlcl9pZCI6NzV9.a5CJ20KsvYoQl8pS20oQOwdek5fbXXdGrwzG8Lbg_Ww
+### 6 Редактирование поста
 
 ### 6.1 Попытка редактирования поста без авторизации (должна быть ошибка 401)
 PUT http://127.0.0.1:8000/api/posts/190/
@@ -134,9 +150,9 @@ Content-Disposition: form-data; name="text"
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### 6.3 Успешное редактирование своего поста (должен работать)
-PUT http://127.0.0.1:8000/api/posts/206/
+PUT http://127.0.0.1:8000/api/posts/214/
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUyNjQxLCJpYXQiOjE3NTA5NTIzNDEsImp0aSI6IjA2MjAwODg0MGEzMzQyYzE5ZjZkYWYwODk1MjIxNjM4IiwidXNlcl9pZCI6NzV9.QT0SZABwdqzg_uzWuk3etqeB-yIyOhXpt1GLYqlTRPM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxNjEwLCJpYXQiOjE3NTA5NjEzMTAsImp0aSI6ImY1MzdlMmM1Y2MxYjRmODRhYzBjNzVjMGNlN2M1ZGY0IiwidXNlcl9pZCI6Nzh9.2hyFxqE8FEUCBTlAEn4HV8OsxIkdvm1KSvUIQ0WHGI4
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="text"
@@ -149,21 +165,16 @@ Content-Type: image/jpeg
 < ./new_image.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### 7.1 Попытка удаления комментария без авторизации (должна быть ошибка 401)
-DELETE http://127.0.0.1:8000/api/comments/190/delete/
-Content-Type: application/json
 
-### 7.2 Попытка удаления чужого комментария (должна быть ошибка 403)
-DELETE http://127.0.0.1:8000/api/comments/190/delete/
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODc4NTU0LCJpYXQiOjE3NTA4NzgyNTQsImp0aSI6IjhmMjZiYjFhODI5NDRmYjliOWI0MDUwMDc5ZmM3MDI1IiwidXNlcl9pZCI6NjV9.y76j012N7x4DdozLdMFG5Nls1Qkv-pseTqdah0pb3js
+### 7. Тестирование прав доступа
 
-### 7.3 Удаление своего комментария (должен работать)
-DELETE http://127.0.0.1:8000/api/comments/206/delete/
+### 7.1 Попытка удалить чужой пост (должна быть ошибка 403)
+DELETE http://127.0.0.1:8000/api/posts/1/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUyOTY0LCJpYXQiOjE3NTA5NTI2NjQsImp0aSI6ImIxM2VlYTM3Mzk3NTRjYmU4YzgzMDg5NGVkODhhNGFiIiwidXNlcl9pZCI6NzV9.-jUU9P0RjpRegI-tUNtNWWS4nsMlafV8pk-fVfvn2Pk
+Authorization: Bearer eiJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwODc3ODU4LCJpYXQiOjE3NTA4Nzc1NTgsImp0aSI6ImYwYjQxYWNiM2U4NTRkMjZiNzRhMWY4M2ZkYjA0YzAwIiwidXNlcl9pZCI6NjV9.94-ORG3Y0Hp3KajtjRReQJdDRc9UZt5Mw9h0S5UYars
 
-### 7.4 Удаление комментария к своему посту (должен работать, даже если комментарий не ваш)
-DELETE http://127.0.0.1:8000/api/comments/50/delete/
+### 7.2 Удаление своего поста (должен работать)
+DELETE http://127.0.0.1:8000/api/posts/214/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTUzMDc5LCJpYXQiOjE3NTA5NTI3NzksImp0aSI6IjBjNzg1N2FmMjUyMTRlMmQ5ZGIwNmE5NzFlN2I0ZDEyIiwidXNlcl9pZCI6NzV9.a5CJ20KsvYoQl8pS20oQOwdek5fbXXdGrwzG8Lbg_Ww
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwOTYxNjEwLCJpYXQiOjE3NTA5NjEzMTAsImp0aSI6ImY1MzdlMmM1Y2MxYjRmODRhYzBjNzVjMGNlN2M1ZGY0IiwidXNlcl9pZCI6Nzh9.2hyFxqE8FEUCBTlAEn4HV8OsxIkdvm1KSvUIQ0WHGI4
+

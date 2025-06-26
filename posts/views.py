@@ -79,15 +79,25 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
 
 
-class CommentCreateView(generics.CreateAPIView):
+class CommentCreateView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]  # GET - доступно всем
+        return [permissions.IsAuthenticated()]  # POST - только авторизованным
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comment.objects.filter(post_id=post_id).order_by('-created_at')
 
     def perform_create(self, serializer):
-        post_id = self.kwargs['post_id']
-        post = get_object_or_404(Post, id=post_id)
-        serializer.save(post=post, author=self.request.user)
+        post = get_object_or_404(Post, id=self.kwargs['post_id'])
+        serializer.save(
+            post=post,
+            author=self.request.user  # Устанавливаем автора
+        )
 
 
 class LikeToggleView(generics.CreateAPIView):

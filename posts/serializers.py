@@ -79,6 +79,11 @@ class CommentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Комментарий должен содержать не менее 2 символов.")
         return value
 
+    def validate(self, data):
+        if self.context['request'].method == 'POST' and not self.context['request'].user.is_authenticated:
+            raise serializers.ValidationError("Требуется авторизация")
+        return data
+
 
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
