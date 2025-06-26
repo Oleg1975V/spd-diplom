@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="swiper-button-next"></div>
                     </div>
                 ` : ''}
-                <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>
+                <p class="post-date">${new Date(post.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</p>
                 <button class="like-btn" data-id="${post.id}" ${!localStorage.getItem('access_token') ? 'disabled' : ''}>
                     ❤️ ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
                 </button>
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${(post.comments || []).map(comment => `
                         <div class="comment">
                             <strong>${comment.author}:</strong> ${comment.text}
-                            <small>${new Date(comment.created_at).toLocaleString()}</small>
+                            <small>${new Date(comment.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</small>
                             ${localStorage.getItem('access_token') ? (
                                 post.can_edit ? `
                                     <button class="btn btn-link text-danger ms-auto delete-comment-btn" data-id="${comment.id}">❌ Удалить</button>
