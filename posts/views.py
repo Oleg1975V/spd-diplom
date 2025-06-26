@@ -52,7 +52,11 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
                 {'error': 'You are not the owner of this post'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().delete(request, *args, **kwargs)
+        self.perform_destroy(post)
+        return Response(
+            {'message': 'Пост успешно удален'},  # Явное сообщение
+            status=status.HTTP_200_OK            # Измененный статус
+        )
 
     def put(self, request, *args, **kwargs):
         post = self.get_object()

@@ -273,14 +273,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Обработчик для кнопок удаления поста
         document.querySelectorAll('.delete-post-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const postId = btn.dataset.id;
                 if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
+                
                 try {
                     const token = localStorage.getItem('access_token');
                     if (!token) throw new Error('Требуется авторизация');
+                    
                     const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
                         method: 'DELETE',
                         headers: { 
@@ -288,11 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             'Content-Type': 'application/json'
                         }
                     });
+        
+                    const result = await response.json(); // Читаем JSON-ответ
+                    
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.detail || 'Ошибка удаления поста');
+                        throw new Error(result.detail || 'Ошибка удаления поста');
                     }
-                    await fetchPosts(); // Обновляем список постов
+        
+                    showError(result.message || 'Пост успешно удален'); // Показываем сообщение
+                    await fetchPosts(); // Обновляем список
                 } catch (error) {
                     console.error('Error:', error);
                     showError(error.message);
