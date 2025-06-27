@@ -10,7 +10,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         min_length=8,
         style={'input_type': 'password'},
         error_messages={
-            'min_length': 'Пароль должен содержать не менее 8 символов, латинские буквы и цифры, спецсимволы.'
+            'min_length': 'Пароль должен содержать не менее 8 символов, '
+                          'латинские буквы и цифры, спецсимволы.'
         }
     )
     email = serializers.EmailField(required=True)
@@ -22,17 +23,27 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'username': {
                 'min_length': 4,
                 'error_messages': {
-                    'min_length': 'Имя пользователя должно содержать не менее 4 символов, буквы или цифры, тире, подчеркивание, точка.'
+                    'min_length': 'Имя пользователя должно содержать не менее '
+                                  '4 символов, буквы или цифры, тире, '
+                                  'подчеркивание, точка.'
                 }
             }
         }
 
     def validate_email(self, value):
+        """
+        Проверяет уникальность адреса электронной почты.
+        """
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Пользователь с таким email уже существует.")
+            raise serializers.ValidationError(
+                "Пользователь с таким email уже существует."
+            )
         return value
 
     def create(self, validated_data):
+        """
+        Создает нового пользователя.
+        """
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -50,16 +61,22 @@ class PostImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate_image(self, value):
+        """
+        Проверяет валидность изображения по размеру и формату.
+        """
         # Проверка размера
         if value.size > 5 * 1024 * 1024:  # 5MB
-            raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
+            raise serializers.ValidationError(
+                "Размер изображения не должен превышать 5MB."
+            )
 
         # Проверка формата
         valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
         extension = os.path.splitext(value.name)[1].lower()
         if extension not in valid_extensions:
             raise serializers.ValidationError(
-                "Неподдерживаемый формат изображения. Допустимые форматы: JPG, JPEG, PNG, GIF, WEBP"
+                "Неподдерживаемый формат изображения. "
+                "Допустимые форматы: JPG, JPEG, PNG, GIF, WEBP"
             )
 
         return value
@@ -67,7 +84,10 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
-    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    created_at = serializers.DateTimeField(
+        format='%Y-%m-%d %H:%M:%S',
+        read_only=True
+    )
 
     class Meta:
         model = Comment
@@ -75,12 +95,21 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
     def validate_text(self, value):
+        """
+        Проверяет длину текста комментария.
+        """
         if len(value.strip()) < 2:
-            raise serializers.ValidationError("Комментарий должен содержать не менее 2 символов.")
+            raise serializers.ValidationError(
+                "Комментарий должен содержать не менее 2 символов."
+            )
         return value
 
     def validate(self, data):
-        if self.context['request'].method == 'POST' and not self.context['request'].user.is_authenticated:
+        """
+        Проверяет авторизацию пользователя при создании комментария.
+        """
+        if (self.context['request'].method == 'POST' and
+                not self.context['request'].user.is_authenticated):
             raise serializers.ValidationError("Требуется авторизация")
         return data
 
@@ -97,22 +126,36 @@ class PostSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
     likes_count = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    created_at = serializers.DateTimeField(
+        format='%Y-%m-%d %H:%M:%S',
+        read_only=True
+    )
     can_edit = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'text', 'images', 'created_at', 'comments', 'likes_count', 'can_edit']
+        fields = [
+            'id', 'author', 'text', 'images', 'created_at',
+            'comments', 'likes_count', 'can_edit'
+        ]
         read_only_fields = ['id', 'created_at', 'likes_count']
 
     def get_likes_count(self, obj):
+        """Возвращает количество лайков для поста."""
         return obj.likes.count()
 
     def get_can_edit(self, obj):
+        """
+        Проверяет, может ли текущий пользователь редактировать пост.
+        """
         request = self.context.get('request')
-        return request and (request.user == obj.author or request.user.is_staff)
+        return request and (request.user == obj.author
+                           or request.user.is_staff)
 
     def get_images(self, obj):
+        """
+        Возвращает список URL изображений поста.
+        """
         request = self.context.get('request')
         images = obj.images.all()
         result = []
@@ -130,22 +173,34 @@ class PostSerializer(serializers.ModelSerializer):
 
         return result
 
-
     def validate_text(self, value):
+        """
+        Проверяет длину текста поста.
+        """
         if len(value.strip()) < 5:
-            raise serializers.ValidationError("Текст поста должен содержать не менее 5 символов.")
+            raise serializers.ValidationError(
+                "Текст поста не менее 5 символов."
+            )
         return value
 
     def create(self, validated_data):
+        """
+        Создает новый пост и связанные изображения.
+        """
         post = Post.objects.create(**validated_data)
         images_data = self.context.get('view').request.FILES.getlist('images')
         if len(images_data) > 10:
-            raise serializers.ValidationError("Необходимо загрузить не более 10 изображений.")
+            raise serializers.ValidationError(
+                "Необходимо загрузить не более 10 изображений."
+            )
         for image_data in images_data:
             PostImage.objects.create(post=post, image=image_data)
         return post
 
     def update(self, instance, validated_data):
+        """
+        Обновляет существующий пост и добавляет новые изображения.
+        """
         # Обновляем текст
         instance.text = validated_data.get('text', instance.text)
         instance.save()

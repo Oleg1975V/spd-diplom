@@ -23,8 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Инициализированные Swiper-карусели
     const swiperInstances = [];
-    
-    // Функция для показа индикатора загрузки
+
+    /**
+     * Показывает индикатор загрузки
+     * @param {HTMLElement} element - Элемент, к которому прикрепляется индикатор
+     * @param {string} text - Текст для отображения (по умолчанию "Загрузка...")
+     */
     const showLoading = (element, text = 'Загрузка...') => {
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'loading-indicator';
@@ -36,8 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
         element.appendChild(loadingDiv);
         return loadingDiv;
     };
-    
-    // Функция для скрытия индикатора загрузки
+
+    /**
+     * Скрывает индикатор загрузки
+     * @param {HTMLElement} element - Элемент, содержащий индикатор загрузки
+     */
     const hideLoading = (element) => {
         const loader = element.querySelector('.loading-indicator');
         if (loader) {
@@ -45,63 +52,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Проверка авторизации
+    /**
+     * Проверяет авторизацию пользователя
+     * @returns {Promise<boolean>} - true, если пользователь авторизован, иначе false
+     */
     const checkAuth = async () => {
         const token = localStorage.getItem('access_token');
         return !!token;
     };
 
-    // Обновление UI
+    /**
+     * Обновляет интерфейс в зависимости от статуса авторизации
+     */
     const updateUI = async () => {
         const isAuth = await checkAuth();
         elements.authForms.classList.toggle('hidden', isAuth);
         elements.newPostForm.classList.toggle('hidden', !isAuth);
         elements.userInfo.classList.toggle('hidden', !isAuth);
-        
+
         if (isAuth) {
             const username = localStorage.getItem('username');
             if (username) elements.usernameDisplay.textContent = username;
         }
+
         await fetchPosts();
     };
 
-    // Загрузка постов
-    // Добавляем переменную для текущей страницы
+    /**
+     * Загружает посты с сервера
+     * @param {number} page - Номер страницы для пагинации
+     */
     let currentPage = 1;
     const fetchPosts = async (page = 1) => {
         const loadingIndicator = showLoading(elements.postsContainer, 'Загрузка постов...');
+        
         try {
             const headers = {};
-        // Добавляем Authorization только если есть access_token
-        const token = localStorage.getItem('access_token');
+            const token = localStorage.getItem('access_token');
+            
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
+
             const response = await fetch(`${API_BASE_URL}/posts/?page=${page}`, { headers });
+            
             if (!response.ok) {
-                    throw new Error('Ошибка загрузки постов');
-                }
+                throw new Error('Ошибка загрузки постов');
+            }
+
             const data = await response.json();
             renderPosts(data.results || data);
             renderPagination(data);
         } catch (error) {
             console.error('Error:', error);
-                showError('Ошибка загрузки постов: ' + error.message);
+            showError('Ошибка загрузки постов: ' + error.message);
         } finally {
             hideLoading(elements.postsContainer);
         }
     };
 
-    // Функция для отображения пагинации
+    /**
+     * Отображает элементы пагинации
+     * @param {Object} data - Данные из ответа API, включая информацию о пагинации
+     */
     const renderPagination = (data) => {
-        if (!data.next && !data.previous) {
-            return; // Нет страниц — ничего не делаем
-        }
+        if (!data.next && !data.previous) return;
 
         const paginationDiv = document.createElement('div');
         paginationDiv.className = 'pagination';
 
-        // Кнопка "Назад"
         if (data.previous) {
             const prevBtn = document.createElement('button');
             prevBtn.textContent = '← Назад';
@@ -112,12 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
             paginationDiv.appendChild(prevBtn);
         }
 
-        // Номер текущей страницы
         const pageInfo = document.createElement('span');
         pageInfo.textContent = ` Страница ${currentPage} `;
         paginationDiv.appendChild(pageInfo);
 
-        // Кнопка "Вперед"
         if (data.next) {
             const nextBtn = document.createElement('button');
             nextBtn.textContent = 'Вперед →';
@@ -128,11 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
             paginationDiv.appendChild(nextBtn);
         }
 
-        // Вставляем пагинацию под списком постов
         elements.postsContainer.appendChild(paginationDiv);
     };
 
-    // Показать ошибку
+    /**
+     * Отображает сообщение об ошибке
+     * @param {string} message - Сообщение об ошибке
+     */
     const showError = (message) => {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
@@ -141,7 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => errorDiv.remove(), 5000);
     };
 
-    // Отрисовка постов с улучшенной обработкой изображений
+    /**
+     * Отрисовывает список постов на странице
+     * @param {Array} posts - Массив объектов постов
+     */
     const renderPosts = (posts) => {
         // Уничтожаем старые карусели
         swiperInstances.forEach(swiper => swiper.destroy());
@@ -163,9 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     ` : ''}
                 </div>
-        
                 <p class="post-text">${post.text}</p>
-        
                 ${post.images && post.images.length ? `
                     <div class="swiper post-images">
                         <div class="swiper-wrapper">
@@ -184,19 +204,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="swiper-button-next"></div>
                     </div>
                 ` : ''}
-        
-                <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>
-        
+                <p class="post-date">${new Date(post.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</p>
                 <button class="like-btn" data-id="${post.id}" ${!localStorage.getItem('access_token') ? 'disabled' : ''}>
                     ❤️ ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
                 </button>
-        
                 <div class="comments">
                     <h5>Комментарии (${post.comments ? post.comments.length : 0})</h5>
                     ${(post.comments || []).map(comment => `
                         <div class="comment">
                             <strong>${comment.author}:</strong> ${comment.text}
-                            <small>${new Date(comment.created_at).toLocaleString()}</small>
+                            <small>${new Date(comment.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</small>
                             ${localStorage.getItem('access_token') ? (
                                 post.can_edit ? `
                                     <button class="btn btn-link text-danger ms-auto delete-comment-btn" data-id="${comment.id}">❌ Удалить</button>
@@ -204,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             ) : ''}
                         </div>
                     `).join('')}
-        
                     ${localStorage.getItem('access_token') ? `
                         <form class="comment-form" data-id="${post.id}">
                             <input type="text" placeholder="Ваш комментарий" required>
@@ -215,9 +231,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Инициализация каруселей с обработкой загрузки изображений
+        // Инициализация каруселей
         document.querySelectorAll('.swiper').forEach(swiperEl => {
-            
             const swiper = new Swiper(swiperEl, {
                 loop: true,
                 pagination: {
@@ -241,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             swiperInstances.push(swiper);
         });
 
-        // Назначение обработчиков
+        // Назначение обработчиков событий
         document.querySelectorAll('.like-btn').forEach(btn => {
             btn.addEventListener('click', () => handleLike(btn.dataset.id));
         });
@@ -263,25 +278,25 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', async () => {
                 const commentId = btn.dataset.id;
                 const postId = btn.closest('.post').dataset.id;
-        
+
                 if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) return;
-        
+
                 try {
                     const token = localStorage.getItem('access_token');
                     if (!token) throw new Error('Требуется авторизация');
-        
+
                     const response = await fetch(`${API_BASE_URL}/comments/${commentId}/delete/`, {
                         method: 'DELETE',
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
-        
+
                     if (!response.ok) {
                         const errorData = await response.json();
                         throw new Error(errorData.detail || 'Ошибка удаления комментария');
                     }
-        
+
                     alert('Комментарий успешно удален');
                     await fetchPosts(); // Обновляем список постов
                 } catch (error) {
@@ -290,41 +305,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+
+        document.querySelectorAll('.delete-post-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const postId = btn.dataset.id;
+
+                if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
+
+                try {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) throw new Error('Требуется авторизация');
+
+                    const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
+                        method: 'DELETE',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const result = await response.json(); // Читаем JSON-ответ
+                    
+                    if (!response.ok) {
+                        throw new Error(result.detail || 'Ошибка удаления поста');
+                    }
+
+                    showError(result.message || 'Пост успешно удален'); // Показываем сообщение
+                    await fetchPosts(); // Обновляем список
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError(error.message);
+                }
+            });
+        });
     };
 
-    document.querySelectorAll('.delete-post-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const postId = btn.dataset.id;
-            if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
-            try {
-                const token = localStorage.getItem('access_token');
-                if (!token) throw new Error('Требуется авторизация');
-                const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Ошибка удаления поста');
-                }
-                alert('Пост успешно удален');
-                await fetchPosts(); // Обновляем список постов
-            } catch (error) {
-                console.error('Error:', error);
-                showError(error.message);
-            }
-        });
-    });
-
-    // Создание поста с индикатором загрузки
+    /**
+     * Создает новый пост
+     * @param {Event} e - Событие отправки формы
+     */
     const handleNewPost = async (e) => {
         e.preventDefault();
         const text = elements.newPostText.value.trim();
         const images = elements.newPostImages.files;
 
-        if (!text) return showError('Введите текст поста');
+        if (!text) return showError('Введите текст поста не менее 5 символов');
         if (images.length > 10) return showError('Не более 10 изображений');
 
         const formData = new FormData();
@@ -359,7 +384,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Показать форму редактирования
+    /**
+     * Показывает форму редактирования поста
+     * @param {string} postId - ID редактируемого поста
+     */
     const showEditForm = async (postId) => {
         try {
             const token = localStorage.getItem('access_token');
@@ -368,12 +396,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
-            if (!response.ok) throw new Error('Ошибка загрузки поста');
-            
-            const post = await response.json();
 
-            // Создать модальное окно
+            if (!response.ok) throw new Error('Ошибка загрузки поста');
+
+            const post = await response.json();
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.innerHTML = `
@@ -402,15 +428,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </form>
                 </div>
             `;
-            
+
             document.body.appendChild(modal);
-            
-            // Обработчики для модального окна
             modal.querySelector('.cancel-edit').addEventListener('click', () => modal.remove());
-            
-            modal.querySelector('#edit-post-form').addEventListener('submit', async (e) => {
+
+            modal.querySelector('#edit-post-form').addEventListener('submit', async (e) => { 
                 e.preventDefault();
                 const loadingIndicator = showLoading(modal.querySelector('.modal-content'), 'Сохранение...');
+                
                 try {
                     await handleEditPost(postId, modal);
                 } catch (error) {
@@ -419,8 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideLoading(modal.querySelector('.modal-content'));
                 }
             });
-            
-            // Обработчики для удаления изображений
+
             modal.querySelectorAll('.delete-image-btn').forEach(btn => {
                 btn.addEventListener('click', () => handleDeleteImage(postId, btn.dataset.url, modal));
             });
@@ -430,13 +454,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Редактирование поста
+    /**
+     * Редактирует существующий пост
+     * @param {string} postId - ID редактируемого поста
+     * @param {HTMLElement} modal - Элемент модального окна
+     */
     const handleEditPost = async (postId, modal) => {
         const text = modal.querySelector('#edit-post-text').value.trim();
         const images = modal.querySelector('#edit-post-images').files;
-        
-        if (!text) throw new Error('Введите текст поста');
-        
+
+        if (!text) throw new Error('Введите текст поста не менее 5 символов');
+
         const formData = new FormData();
         formData.append('text', text);
         Array.from(images).forEach(img => formData.append('images', img));
@@ -448,12 +476,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.detail || 'Ошибка редактирования поста');
             }
-            
+
             modal.remove();
             await fetchPosts();
         } catch (error) {
@@ -461,14 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Удаление изображения
+    /**
+     * Удаляет изображение из поста
+     * @param {string} postId - ID поста
+     * @param {string} imageUrl - URL изображения
+     * @param {HTMLElement} modal - Элемент модального окна
+     */
     const handleDeleteImage = async (postId, imageUrl, modal) => {
         if (!confirm('Вы уверены, что хотите удалить это изображение?')) return;
-        
+
         try {
             const token = localStorage.getItem('access_token');
             const imageName = imageUrl.split('/').pop();
-            
+
             const response = await fetch(`${API_BASE_URL}/posts/${postId}/delete_image/`, {
                 method: 'POST',
                 headers: {
@@ -477,10 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({ image_name: imageName })
             });
-            
+
             if (!response.ok) throw new Error('Ошибка удаления изображения');
-            
-            // Обновляем форму редактирования
+
             modal.remove();
             await showEditForm(postId);
         } catch (error) {
@@ -489,27 +521,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Удаление поста
-    const handleDeletePost = async (postId) => {
-        if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
-        
-        try {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (!response.ok) throw new Error('Ошибка удаления поста');
-            
-            await fetchPosts();
-        } catch (error) {
-            console.error('Error:', error);
-            showError(error.message);
-        }
-    };
-
-    // Лайк поста
+    /**
+     * Ставит/убирает лайк к посту
+     * @param {string} postId - ID поста
+     */
     const handleLike = async (postId) => {
         try {
             const token = localStorage.getItem('access_token');
@@ -522,9 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (!response.ok) throw new Error('Ошибка лайка');
-            
+
             await fetchPosts();
         } catch (error) {
             console.error('Error:', error);
@@ -532,10 +547,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Добавление комментария
+    /**
+     * Добавляет комментарий к посту
+     * @param {string} postId - ID поста
+     * @param {string} text - Текст комментария
+     */
     const handleComment = async (postId, text) => {
         if (!text.trim()) return showError('Введите комментарий');
-        
+
         try {
             const token = localStorage.getItem('access_token');
             if (!token) throw new Error('Требуется авторизация');
@@ -548,9 +567,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({ text })
             });
-            
+
             if (!response.ok) throw new Error('Ошибка комментария');
-            
+
             await fetchPosts();
         } catch (error) {
             console.error('Error:', error);
@@ -558,12 +577,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Авторизация
+    /**
+     * Авторизует пользователя
+     * @param {Event} e - Событие отправки формы
+     */
     const handleLogin = async (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
-
         const loadingIndicator = showLoading(elements.loginForm, 'Вход...');
 
         try {
@@ -582,8 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             localStorage.setItem('username', username);
-            
-            // Скрыть формы авторизации
+
             elements.loginForm.classList.add('hidden');
             elements.registerForm.classList.add('hidden');
             await updateUI();
@@ -595,13 +615,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Регистрация
+    /**
+     * Регистрирует нового пользователя
+     * @param {Event} e - Событие отправки формы
+     */
     const handleRegister = async (e) => {
         e.preventDefault();
         const username = document.getElementById('register-username').value;
         const email = document.getElementById('register-email').value;
         const password = document.getElementById('register-password').value;
-
         const loadingIndicator = showLoading(elements.registerForm, 'Регистрация...');
 
         try {
@@ -627,7 +649,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Выход из системы
+    /**
+     * Выходит из системы
+     */
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -635,23 +659,22 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI();
     };
 
-    // Инициализация
+    /**
+     * Инициализирует приложение
+     */
     const init = () => {
         elements.newPostForm.addEventListener('submit', handleNewPost);
         elements.loginForm.addEventListener('submit', handleLogin);
         elements.registerForm.addEventListener('submit', handleRegister);
         elements.logoutBtn.addEventListener('click', handleLogout);
-        
         elements.showLoginBtn.addEventListener('click', () => {
             elements.loginForm.classList.remove('hidden');
             elements.registerForm.classList.add('hidden');
         });
-        
         elements.showRegisterBtn.addEventListener('click', () => {
             elements.registerForm.classList.remove('hidden');
             elements.loginForm.classList.add('hidden');
         });
-
         updateUI();
     };
 
