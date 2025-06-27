@@ -46,29 +46,29 @@ DATABASE\_PORT=5432
 *python manage.py migrate*  
 
 6. Создать суперпользователя:  
-python manage.py createsuperuser  
+*python manage.py createsuperuser*  
 
 7. Запустить сервер:  
 *python manage.py runserver*  
 
 ## API Endpoints
 
-- Аутентификация
+- Аутентификация  
 POST /api/token/ - получить токены (username и password)  
 POST /api/register/ - зарегистрировать нового пользователя  
 
-- Посты
+- Посты  
 GET /api/posts/ - получить список всех постов  
 POST /api/posts/ - создать новый пост (требуется авторизация)  
 GET /api/posts/{id}/ - получить детали конкретного поста  
 PUT /api/posts/{id}/ - обновить пост (только автором)  
 DELETE /api/posts/{id}/ - удалить пост (только автором)  
 
-- Комментарии
+- Комментарии  
 GET /api/posts/{post\_id}/comments/ - получить список комментариев к посту  
 POST /api/posts/{post\_id}/comments/ - оставить комментарий (требуется авторизация)  
 
-- Лайки
+- Лайки  
 POST /api/posts/{post\_id}/like/ - поставить/убрать лайк (требуется авторизация)  
 
 ## REST Client API
