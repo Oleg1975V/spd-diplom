@@ -31,15 +31,15 @@
 3. Установить зависимости:
 pip install -r requirements.txt
 
-4. Создать файл .env в корне проекта:
-SECRET\_KEY=your-secret-key
-DEBUG=True
-ALLOWED\_HOSTS=localhost,127.0.0.1
-DATABASE\_NAME=your\_db\_name
-DATABASE\_USER=your\_db\_user
-DATABASE\_PASSWORD=your\_db\_password
-DATABASE\_HOST=localhost
-DATABASE\_PORT=5432
+4. Создать файл .env в корне проекта:  
+SECRET\_KEY=your-secret-key  
+DEBUG=True  
+ALLOWED\_HOSTS=localhost,127.0.0.1  
+DATABASE\_NAME=your\_db\_name  
+DATABASE\_USER=your\_db\_user  
+DATABASE\_PASSWORD=your\_db\_password  
+DATABASE\_HOST=localhost  
+DATABASE\_PORT=5432  
 
 5. Применить миграции:
 python manage.py makemigrations
