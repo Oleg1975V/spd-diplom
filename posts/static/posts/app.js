@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = elements.newPostText.value.trim();
         const images = elements.newPostImages.files;
 
-        if (!text) return showError('Введите текст поста');
+        if (!text) return showError('Введите текст поста не менее 5 символов');
         if (images.length > 10) return showError('Не более 10 изображений');
 
         const formData = new FormData();
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = modal.querySelector('#edit-post-text').value.trim();
         const images = modal.querySelector('#edit-post-images').files;
 
-        if (!text) throw new Error('Введите текст поста');
+        if (!text) throw new Error('Введите текст поста не менее 5 символов');
 
         const formData = new FormData();
         formData.append('text', text);

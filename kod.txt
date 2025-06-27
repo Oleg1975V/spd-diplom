@@ -50,7 +50,8 @@ C:\Users\Oleg\spd-diplom\social_media\
     `---posts
         `---index.html
 
-# from django.contrib import admin
+# admin.py
+from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Post, PostImage, Comment, Like
@@ -198,6 +199,7 @@ def delete_post_images(sender, instance, **kwargs):
         image.delete()
 
 
+
 # serializers.py
 import os
 from rest_framework import serializers
@@ -254,7 +256,7 @@ class PostImageSerializer(serializers.ModelSerializer):
         # Проверка размера
         if value.size > 5 * 1024 * 1024:  # 5MB
             raise serializers.ValidationError("Размер изображения не должен превышать 5MB.")
-        
+
         # Проверка формата
         valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
         extension = os.path.splitext(value.name)[1].lower()
@@ -262,7 +264,7 @@ class PostImageSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Неподдерживаемый формат изображения. Допустимые форматы: JPG, JPEG, PNG, GIF, WEBP"
             )
-        
+
         return value
 
 
@@ -279,6 +281,11 @@ class CommentSerializer(serializers.ModelSerializer):
         if len(value.strip()) < 2:
             raise serializers.ValidationError("Комментарий должен содержать не менее 2 символов.")
         return value
+
+    def validate(self, data):
+        if self.context['request'].method == 'POST' and not self.context['request'].user.is_authenticated:
+            raise serializers.ValidationError("Требуется авторизация")
+        return data
 
 
 class LikeSerializer(serializers.ModelSerializer):
@@ -434,7 +441,11 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
                 {'error': 'You are not the owner of this post'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().delete(request, *args, **kwargs)
+        self.perform_destroy(post)
+        return Response(
+            {'message': 'Пост успешно удален'},  # Явное сообщение
+            status=status.HTTP_200_OK            # Измененный статус
+        )
 
     def put(self, request, *args, **kwargs):
         post = self.get_object()
@@ -457,15 +468,25 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.delete()
 
 
-class CommentCreateView(generics.CreateAPIView):
+class CommentCreateView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]  # GET - доступно всем
+        return [permissions.IsAuthenticated()]  # POST - только авторизованным
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comment.objects.filter(post_id=post_id).order_by('-created_at')
 
     def perform_create(self, serializer):
-        post_id = self.kwargs['post_id']
-        post = get_object_or_404(Post, id=post_id)
-        serializer.save(post=post, author=self.request.user)
+        post = get_object_or_404(Post, id=self.kwargs['post_id'])
+        serializer.save(
+            post=post,
+            author=self.request.user  # Устанавливаем автора
+        )
 
 
 class LikeToggleView(generics.CreateAPIView):
@@ -544,7 +565,7 @@ class DeleteCommentView(generics.DestroyAPIView):
         comment.delete()
         return Response({'message': 'Комментарий успешно удален'}, status=status.HTTP_200_OK)
 
-
+        
 # settings.py
 """
 Django settings for social_media project.
@@ -660,7 +681,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -776,7 +797,7 @@ if settings.DEBUG:
         <!-- Форма создания поста -->
         <form id="new-post-form" class="hidden">
             <h2>Новый пост</h2>
-            <textarea id="new-post-text" placeholder="Введите текст поста" required></textarea>
+            <textarea id="new-post-text" placeholder="Введите текст поста не менее 5 символов" required></textarea>
             <input type="file" id="new-post-images" accept="image/*" multiple>
             <button type="submit">Опубликовать</button>
         </form>
@@ -1396,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="swiper-button-next"></div>
                     </div>
                 ` : ''}
-                <p class="post-date">${new Date(post.created_at).toLocaleString()}</p>
+                <p class="post-date">${new Date(post.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</p>
                 <button class="like-btn" data-id="${post.id}" ${!localStorage.getItem('access_token') ? 'disabled' : ''}>
                     ❤️ ${post.likes_count} ${post.likes_count === 1 ? 'лайк' : 'лайков'}
                 </button>
@@ -1405,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${(post.comments || []).map(comment => `
                         <div class="comment">
                             <strong>${comment.author}:</strong> ${comment.text}
-                            <small>${new Date(comment.created_at).toLocaleString()}</small>
+                            <small>${new Date(comment.created_at).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}</small>
                             ${localStorage.getItem('access_token') ? (
                                 post.can_edit ? `
                                     <button class="btn btn-link text-danger ms-auto delete-comment-btn" data-id="${comment.id}">❌ Удалить</button>
@@ -1492,32 +1513,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-    };
 
-    // Установка обработчика для кнопок "Удалить пост"
-    document.querySelectorAll('.delete-post-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const postId = btn.dataset.id;
-            if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
-            try {
-                const token = localStorage.getItem('access_token');
-                if (!token) throw new Error('Требуется авторизация');
-                const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
-                    method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Ошибка удаления поста');
+        document.querySelectorAll('.delete-post-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const postId = btn.dataset.id;
+                if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
+                
+                try {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) throw new Error('Требуется авторизация');
+                    
+                    const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
+                        method: 'DELETE',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+        
+                    const result = await response.json(); // Читаем JSON-ответ
+                    
+                    if (!response.ok) {
+                        throw new Error(result.detail || 'Ошибка удаления поста');
+                    }
+        
+                    showError(result.message || 'Пост успешно удален'); // Показываем сообщение
+                    await fetchPosts(); // Обновляем список
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError(error.message);
                 }
-                alert('Пост успешно удален');
-                await fetchPosts(); // Обновляем список постов
-            } catch (error) {
-                console.error('Error:', error);
-                showError(error.message);
-            }
+            });
         });
-    });
+    };
 
     // Создание поста с индикатором загрузки
     const handleNewPost = async (e) => {
@@ -1525,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = elements.newPostText.value.trim();
         const images = elements.newPostImages.files;
 
-        if (!text) return showError('Введите текст поста');
+        if (!text) return showError('Введите текст поста не менее 5 символов');
         if (images.length > 10) return showError('Не более 10 изображений');
 
         const formData = new FormData();
@@ -1625,7 +1653,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = modal.querySelector('#edit-post-text').value.trim();
         const images = modal.querySelector('#edit-post-images').files;
 
-        if (!text) throw new Error('Введите текст поста');
+        if (!text) throw new Error('Введите текст поста не менее 5 символов');
 
         const formData = new FormData();
         formData.append('text', text);
@@ -1666,23 +1694,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Ошибка удаления изображения');
             modal.remove();
             await showEditForm(postId);
-        } catch (error) {
-            console.error('Error:', error);
-            showError(error.message);
-        }
-    };
-
-    // Удаление поста
-    const handleDeletePost = async (postId) => {
-        if (!confirm('Вы уверены, что хотите удалить этот пост?')) return;
-        try {
-            const token = localStorage.getItem('access_token');
-            const response = await fetch(`${API_BASE_URL}/posts/${postId}/`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Ошибка удаления поста');
-            await fetchPosts();
         } catch (error) {
             console.error('Error:', error);
             showError(error.message);
