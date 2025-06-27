@@ -28,8 +28,8 @@
 
 2. Создать и активировать виртуальное окружение:
 
-3. Установить зависимости:
-pip install -r requirements.txt
+3. Установить зависимости:  
+*pip install -r requirements.txt*  
 
 4. Создать файл *.env* в корне проекта:  
 SECRET\_KEY=your-secret-key  
